@@ -1,0 +1,50 @@
+{
+    "name": "dreamabout/kaikei-envelope",
+    "description": "v1 envelope contract for kaikei webhook deliveries -- shared by Dreamshop (producer) and Kaikei (receiver).",
+    "type": "library",
+    "license": "proprietary",
+    "keywords": ["kaikei", "envelope", "webhook", "dreamshop"],
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "require": {
+        "php": "^8.1",
+        "ext-json": "*",
+        "ext-hash": "*",
+        "opis/json-schema": "^2.3"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5",
+        "phpstan/phpstan": "^1.10",
+        "friendsofphp/php-cs-fixer": "^3.50"
+    },
+    "autoload": {
+        "psr-4": {
+            "Dreamabout\\KaikeiEnvelope\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Dreamabout\\KaikeiEnvelope\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "test:coverage": "phpunit --coverage-text",
+        "stan": "phpstan analyse --memory-limit=1G",
+        "cs:check": "php-cs-fixer fix --dry-run --diff",
+        "cs:fix": "php-cs-fixer fix",
+        "schema:lint": "phpunit --testsuite=schema-lint",
+        "ci": [
+            "@cs:check",
+            "@stan",
+            "@test"
+        ]
+    },
+    "config": {
+        "sort-packages": true,
+        "optimize-autoloader": true,
+        "preferred-install": {
+            "*": "dist"
+        }
+    }
+}
