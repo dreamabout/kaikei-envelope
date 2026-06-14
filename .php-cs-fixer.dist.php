@@ -17,7 +17,6 @@ return (new PhpCsFixer\Config())
         'ordered_imports'                        => ['sort_algorithm' => 'alpha'],
         'declare_strict_types'                   => true,
         'native_function_invocation'             => ['include' => ['@compiler_optimized']],
-        'binary_operator_spaces'                 => ['default' => 'align_single_space_minimal'],
         'no_superfluous_phpdoc_tags'             => ['allow_mixed' => true],
         'phpdoc_align'                           => ['align' => 'left'],
         'single_quote'                           => true,
