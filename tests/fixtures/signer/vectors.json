@@ -1,0 +1,37 @@
+[
+    {
+        "label": "kaikei_v1_worked_example",
+        "ts": 1714238400,
+        "secret": "whsec_webhook_v1_example_secret",
+        "body": "{\"event\":\"order.shipped\",\"timestamp\":\"2026-05-09T12:34:56Z\",\"shop_id\":13,\"data\":{\"order_id\":\"ORD-001\"}}",
+        "header": "t=1714238400,v1=62e07c592c6502ee02c9f965fa3a3882ff3f0846347f748704c28f9c09ccbefb"
+    },
+    {
+        "label": "empty_body",
+        "ts": 1700000000,
+        "secret": "whsec_test",
+        "body": "",
+        "header": "t=1700000000,v1=5967f3c560522fa40cf2876ebc3c3a08551dd6959aaade3b413460591895bdcc"
+    },
+    {
+        "label": "unicode_body",
+        "ts": 1714238401,
+        "secret": "whsec_rotated_2026",
+        "body": "{\"name\":\"Åse Ødegård\",\"city\":\"Århus\"}",
+        "header": "t=1714238401,v1=11f3fcd180677ac3c946907ba220b8e64b433ceb6c3e02c82d73cfd16099e20a"
+    },
+    {
+        "label": "whitespace_sensitive",
+        "ts": 1714238400,
+        "secret": "whsec_webhook_v1_example_secret",
+        "body": "{\"a\":1} ",
+        "header": "t=1714238400,v1=bef833c3aeaeef1e37e91e74d971d2926dfa9cd1f3174a9b912502abf79c2afc"
+    },
+    {
+        "label": "large_ts",
+        "ts": 2147483647,
+        "secret": "s3cr3t",
+        "body": "payload-bytes-here",
+        "header": "t=2147483647,v1=863f22b7d934f88ccf3f1732f17bd661ee8c273b2a0dee73f72acda659fd807b"
+    }
+]
