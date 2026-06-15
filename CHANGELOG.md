@@ -9,11 +9,45 @@ and this project adheres to [Semantic Versioning][semver].
 
 ## [Unreleased]
 
-### Added
-- Scaffolding for the package (composer.json, phpunit, phpstan
-  level 8, cs-fixer, CI matrix PHP 8.1-8.4, README skeleton).
-- Decision record: `opis/json-schema: ^2.3` picked over
-  `justinrainbow/json-schema` for JSON Schema draft 2020-12
-  support + structured error paths.
+[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.0.0...HEAD
 
-[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v0.0.0...HEAD
+## [1.0.0] - 2026-06-16
+
+Initial release: the canonical kaikei webhook envelope contract,
+shared by Dreamshop (producer) and Kaikei (receiver).
+
+### Added
+- **Envelope DTOs** — `Envelope` + five payload DTOs
+  (`order.shipped`, `order.captured`, `order.refunded`,
+  `payout.paid`, `payment.prepaid`) with `fromArray()`/`toArray()`
+  round-trip. DTOs model the v2 contract.
+- **Dual JSON Schema contract** — `schemas/v1/` faithfully mirrors
+  the deployed wire contract (`fx_rate_to_dkk`, lenient decimals,
+  ULID-or-UUID `event_id`); `schemas/v2/` is the cleaner forward
+  contract (exactly-2-decimal money, `fx_rate`, ISO-2 + ULID
+  patterns, `additionalProperties: false`). Both retain the B2B
+  customer fields required for e-conomic B2B invoicing. JSON Schema
+  draft 2020-12; the schemas are the source of truth and a CI
+  equivalence test guards the hand-mirrored DTOs against drift.
+- **PayloadValidator** — version-dispatching on `schema_version`
+  (1 → v1, 2 → v2). Three tiers: hand-written envelope structure
+  (400 codes), opis schema validation of `data` (422
+  `invalid_data`), and bc-math cross-field invariants
+  (gross == fee + net, refund-sum identity, gift-card VAT, vat ≤
+  gross, B2B-conditional fields). Returns structured `FieldError`s.
+- **WebhookSigner + SignatureVerifier + VerifyResult** — the
+  `t=<ts>,v1=<hex>` HMAC-SHA256 scheme, byte-identical to
+  Dreamshop's producer signer (equivalence-tested), with
+  constant-time `hash_equals` verification, a 300s tolerance
+  window, and constructor-based secret rotation.
+- Documentation: `README.md`, `docs/security.md`, per-event
+  references under `docs/events/`, and decision records in
+  `docs/decisions.md` (D1–D5).
+
+### Requirements
+- PHP 8.1+; `ext-json`, `ext-hash`, `ext-bcmath`. Zero framework
+  dependencies (installs in both Dreamshop's Symfony 6.4 and
+  Kaikei's Symfony 7.4 trees). One runtime dependency:
+  `opis/json-schema`.
+
+[1.0.0]: https://github.com/dreamabout/kaikei-envelope/releases/tag/v1.0.0

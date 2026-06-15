@@ -8,14 +8,19 @@ namespace Dreamabout\KaikeiEnvelope;
  * Package metadata constants.
  *
  * `PACKAGE_VERSION` is bumped per release; CI asserts it matches the
- * latest CHANGELOG entry. `SCHEMA_VERSION` is pinned to the package's
- * MAJOR -- v1.x.x -> 1; a future v2.x.x -> 2 (see CHANGELOG for the
- * cutover policy).
+ * latest CHANGELOG entry.
+ *
+ * `SCHEMA_VERSION` is the CURRENT envelope contract version the DTOs
+ * emit -- decoupled from `PACKAGE_VERSION` (the package ships at 1.x
+ * while serving contract v2) and from the still-supported legacy v1
+ * contract. The receiver validates both `schema_version` 1 and 2 (see
+ * PayloadValidator::SUPPORTED_SCHEMA_VERSIONS); producers building DTOs
+ * default to this current version.
  */
 final class Version
 {
-    public const PACKAGE_VERSION = '0.1.0-dev';
-    public const SCHEMA_VERSION  = 1;
+    public const PACKAGE_VERSION = '1.0.0';
+    public const SCHEMA_VERSION  = 2;
 
     private function __construct()
     {

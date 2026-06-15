@@ -8,18 +8,24 @@ use Dreamabout\KaikeiEnvelope\Version;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Phase 1 sanity test: the package autoloads, PHP 8.1+ features (the
- * Version class's typed final + readonly conventions) parse cleanly,
- * and the SCHEMA_VERSION constant is the int 1 that downstream
- * consumers rely on.
- *
- * Real coverage starts in Phase 2 with the DTO tests.
+ * Sanity test: the package autoloads, and the version constants hold
+ * the expected shapes. `SCHEMA_VERSION` is the current contract
+ * version the DTOs emit (2), decoupled from the package release (1.x);
+ * the receiver still accepts the legacy v1 contract too.
  */
 final class VersionTest extends TestCase
 {
-    public function testSchemaVersionIsIntegerOne(): void
+    public function testSchemaVersionIsCurrentContractVersion(): void
     {
-        self::assertSame(1, Version::SCHEMA_VERSION);
+        self::assertSame(2, Version::SCHEMA_VERSION);
+    }
+
+    public function testSchemaVersionIsAcceptedByTheValidator(): void
+    {
+        self::assertContains(
+            Version::SCHEMA_VERSION,
+            \Dreamabout\KaikeiEnvelope\Validator\PayloadValidator::SUPPORTED_SCHEMA_VERSIONS,
+        );
     }
 
     public function testPackageVersionFollowsSemverShape(): void
