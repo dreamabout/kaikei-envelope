@@ -1,5 +1,9 @@
 parameters:
     level: 8
+    # Pin to the package's PHP floor so 8.2+ syntax/functions (e.g.
+    # `readonly class`) are flagged statically rather than only at
+    # runtime on the 8.1 CI matrix entry.
+    phpVersion: 80100
     paths:
         - src
         - tests

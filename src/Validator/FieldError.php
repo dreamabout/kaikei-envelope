@@ -13,12 +13,12 @@ namespace Dreamabout\KaikeiEnvelope\Validator;
  * `data.order_id`, `data.items[0].vat_amount`, or a bare envelope
  * key like `event_type`.
  */
-final readonly class FieldError
+final class FieldError
 {
     public function __construct(
-        public string $field,
-        public string $code,
-        public string $message,
+        public readonly string $field,
+        public readonly string $code,
+        public readonly string $message,
     ) {
     }
 }
