@@ -149,3 +149,32 @@ code; they were removed (values are cast at scale-2-safe defaults)
 rather than silenced with coverage-ignore comments. The only
 `throw` left in the class — `loadSchema()` on a missing schema
 file — is reachable via a misconfigured `schemaDir` and is tested.
+
+## D5 — Signer/Verifier mirror the live sources, not the plan's draft API
+
+**Track task:** T5.2-T5.4
+
+**Decision:** `WebhookSigner` mirrors Dreamshop's
+`app/Service/Webhook/WebhookSigner.php` exactly (instance methods
+`sign(int $ts, string $body, string $secret)` + `header(...)`),
+and `SignatureVerifier` / `VerifyResult` mirror Kaikei's
+`src/Webhook/SignatureVerifier.php` + `VerifyResult.php` exactly
+(constructor `(?currentSecret, ?previousSecret)`, `verify(string
+$header, int $now, string $rawBody): VerifyResult`, enum
+`OK/MISSING/MALFORMED/STALE/BAD_SIGNATURE`).
+
+**Why this differs from the plan.** plan.md T5.2-T5.4 sketched a
+different shape (static `header(body, secret, ?ts)`; a readonly
+`VerifyResult` class with `getReason()`; a separate
+`verifyWithRotation()`). That sketch was written before reading the
+two live implementations. The package's purpose is a drop-in for
+both sides' cutovers, so matching the real method shapes makes each
+cutover a class-swap with zero call-site changes — the same
+faithful-mirror principle that drove the v1 schema set. Rotation is
+already first-class via the verifier's `previousSecret` constructor
+arg, so no separate rotation method is needed.
+
+**Not versioned.** The `v1` in `t=<ts>,v1=<hex>` is the
+signature-scheme version, independent of the envelope
+`schema_version`. There is one signer/verifier, shared by both
+contract versions.
