@@ -1,0 +1,56 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://github.com/dreamabout/kaikei-envelope/schemas/v1/order_shipped.payload.schema.json",
+    "title": "order.shipped payload",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["order_id", "customer", "items"],
+    "properties": {
+        "order_id": { "type": "string", "minLength": 1 },
+        "customer": { "$ref": "#/$defs/customer" },
+        "items": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "$ref": "#/$defs/item" }
+        },
+        "currency": { "$ref": "#/$defs/currency" },
+        "fx_rate": { "$ref": "#/$defs/decimal" },
+        "prepayment_event_id": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$" },
+        "invoice_number": { "type": "string", "minLength": 1 },
+        "ean_number": { "type": "string", "pattern": "^[0-9]{13}$" }
+    },
+    "$defs": {
+        "decimal": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
+        "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
+        "customer": {
+            "type": "object",
+            "required": ["country_code", "is_b2b"],
+            "properties": {
+                "country_code": { "type": "string", "pattern": "^[A-Z]{2}$" },
+                "is_b2b": { "type": "boolean" },
+                "name": { "type": "string" },
+                "email": { "type": "string" },
+                "ean_number": { "type": "string", "pattern": "^[0-9]{13}$" },
+                "address": {
+                    "type": "object",
+                    "properties": {
+                        "street": { "type": "string" },
+                        "zip": { "type": "string" },
+                        "city": { "type": "string" },
+                        "country_code": { "type": "string", "pattern": "^[A-Z]{2}$" }
+                    }
+                }
+            }
+        },
+        "item": {
+            "type": "object",
+            "required": ["type", "gross_amount", "vat_amount", "vat_rate"],
+            "properties": {
+                "type": { "type": "string", "enum": ["physical", "gift_card", "digital"] },
+                "gross_amount": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
+                "vat_amount": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
+                "vat_rate": { "type": "string", "pattern": "^-?\\d+\\.\\d{2,4}$" }
+            }
+        }
+    }
+}

@@ -1,0 +1,8 @@
+{
+    "order_id": "O-200",
+    "gateway": "stripe",
+    "transaction_id": "pi_abc123",
+    "amount": "300.00",
+    "captured_at": "2026-06-14T10:00:00Z",
+    "currency": "DKK"
+}

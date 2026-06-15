@@ -1,0 +1,7 @@
+{
+    "order_id": "O-100",
+    "customer": { "country_code": "DK", "is_b2b": false },
+    "items": [
+        { "type": "subscription", "gross_amount": "125.00", "vat_amount": "25.00", "vat_rate": "0.25" }
+    ]
+}

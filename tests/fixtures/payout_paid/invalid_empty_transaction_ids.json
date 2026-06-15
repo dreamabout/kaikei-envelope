@@ -1,0 +1,9 @@
+{
+    "payout_id": "po_xyz789",
+    "gateway": "rapyd",
+    "transaction_ids": [],
+    "gross_amount": "1000.00",
+    "fee_amount": "15.00",
+    "net_amount": "985.00",
+    "paid_at": "2026-06-14T08:00:00Z"
+}

@@ -1,0 +1,11 @@
+{
+    "order_id": "O-400",
+    "customer": { "country_code": "DK", "is_b2b": false },
+    "gateway": "epay",
+    "transaction_id": "epay_tx_abc",
+    "prepaid_at": "2026-06-14T07:00:00Z",
+    "items": [
+        { "type": "digital", "gross_amount": "50.00", "vat_amount": "10.00", "vat_rate": "0.25" }
+    ],
+    "invoice_number": "INV-2026-0002"
+}
