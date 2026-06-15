@@ -23,8 +23,11 @@ use PHPUnit\Framework\TestCase;
  */
 final class SchemaLintTest extends TestCase
 {
-    private const SCHEMA_DIR  = __DIR__ . '/../../schemas/v1';
-    private const FIXTURE_DIR = __DIR__ . '/../fixtures';
+    private const SCHEMA_ROOT  = __DIR__ . '/../../schemas';
+    private const FIXTURE_ROOT = __DIR__ . '/../fixtures';
+
+    /** Contract versions shipped side by side. */
+    private const VERSIONS = ['v1', 'v2'];
 
     /**
      * @dataProvider payloadSchemas
@@ -73,10 +76,13 @@ final class SchemaLintTest extends TestCase
      */
     public static function payloadSchemas(): iterable
     {
-        foreach (self::eventTypes() as $type) {
-            yield $type => [self::SCHEMA_DIR . "/{$type}.payload.schema.json"];
+        foreach (self::VERSIONS as $version) {
+            $dir = self::SCHEMA_ROOT . "/{$version}";
+            foreach (self::eventTypes() as $type) {
+                yield "{$version}:{$type}" => [$dir . "/{$type}.payload.schema.json"];
+            }
+            yield "{$version}:envelope" => [$dir . '/envelope.schema.json'];
         }
-        yield 'envelope' => [self::SCHEMA_DIR . '/envelope.schema.json'];
     }
 
     /**
@@ -84,11 +90,13 @@ final class SchemaLintTest extends TestCase
      */
     public static function validFixtures(): iterable
     {
-        foreach (self::eventTypes() as $type) {
-            yield $type => [
-                self::SCHEMA_DIR . "/{$type}.payload.schema.json",
-                self::FIXTURE_DIR . "/{$type}/valid.json",
-            ];
+        foreach (self::VERSIONS as $version) {
+            foreach (self::eventTypes() as $type) {
+                yield "{$version}:{$type}" => [
+                    self::SCHEMA_ROOT . "/{$version}/{$type}.payload.schema.json",
+                    self::FIXTURE_ROOT . "/{$version}/{$type}/valid.json",
+                ];
+            }
         }
     }
 
@@ -97,13 +105,15 @@ final class SchemaLintTest extends TestCase
      */
     public static function invalidFixtures(): iterable
     {
-        foreach (self::eventTypes() as $type) {
-            $dir = self::FIXTURE_DIR . "/{$type}";
-            foreach (\glob($dir . '/invalid_*.json') ?: [] as $fixture) {
-                yield $type . ':' . \basename($fixture) => [
-                    self::SCHEMA_DIR . "/{$type}.payload.schema.json",
-                    $fixture,
-                ];
+        foreach (self::VERSIONS as $version) {
+            foreach (self::eventTypes() as $type) {
+                $dir = self::FIXTURE_ROOT . "/{$version}/{$type}";
+                foreach (\glob($dir . '/invalid_*.json') ?: [] as $fixture) {
+                    yield "{$version}:{$type}:" . \basename($fixture) => [
+                        self::SCHEMA_ROOT . "/{$version}/{$type}.payload.schema.json",
+                        $fixture,
+                    ];
+                }
             }
         }
     }

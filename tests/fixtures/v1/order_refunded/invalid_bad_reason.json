@@ -1,0 +1,10 @@
+{
+    "order_id": "O-300",
+    "reason": "because_i_said_so",
+    "items": [
+        { "type": "physical", "gross_amount": "-100.00", "vat_amount": "-20.00", "vat_rate": "0.25" }
+    ],
+    "refund_payments": [
+        { "gateway": "stripe", "original_transaction_id": "pi_orig", "refund_transaction_id": "re_new", "amount": "100.00" }
+    ]
+}

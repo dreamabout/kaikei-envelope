@@ -1,9 +1,9 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://github.com/dreamabout/kaikei-envelope/schemas/v1/payout_paid.payload.schema.json",
-    "title": "payout.paid payload (v1 mirror)",
-    "description": "Mirrors validatePayoutData() in Kaikei's PayloadValidator. The gross == fee + net arithmetic invariant is enforced PHP-side.",
+    "$id": "https://github.com/dreamabout/kaikei-envelope/schemas/v2/payout_paid.payload.schema.json",
+    "title": "payout.paid payload",
     "type": "object",
+    "additionalProperties": false,
     "required": ["payout_id", "gateway", "transaction_ids", "gross_amount", "fee_amount", "net_amount", "paid_at"],
     "properties": {
         "payout_id": { "type": "string", "minLength": 1 },
@@ -13,14 +13,11 @@
             "minItems": 1,
             "items": { "type": "string", "minLength": 1 }
         },
-        "gross_amount": { "$ref": "#/$defs/decimal" },
-        "fee_amount": { "$ref": "#/$defs/decimal" },
-        "net_amount": { "$ref": "#/$defs/decimal" },
+        "gross_amount": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
+        "fee_amount": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
+        "net_amount": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
         "paid_at": { "type": "string", "format": "date-time" },
         "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
-        "fx_rate_to_dkk": { "type": "string", "pattern": "^\\d+(\\.\\d+)?$" }
-    },
-    "$defs": {
-        "decimal": { "type": "string", "pattern": "^-?\\d+(\\.\\d+)?$" }
+        "fx_rate": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" }
     }
 }

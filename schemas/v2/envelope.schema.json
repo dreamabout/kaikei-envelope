@@ -1,0 +1,35 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://github.com/dreamabout/kaikei-envelope/schemas/v2/envelope.schema.json",
+    "title": "Kaikei v2 envelope",
+    "description": "Top-level envelope (v2 contract) for every kaikei webhook delivery. The producing client identity is NOT carried here -- the receiver derives it from the per-client signing secret.",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["event_id", "event_type", "schema_version", "occurred_at", "data"],
+    "properties": {
+        "event_id": {
+            "type": "string",
+            "description": "ULID (Crockford Base32, 26 chars). Deterministic per source event; the receiver dedups on this.",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+        },
+        "event_type": {
+            "type": "string",
+            "description": "One of the five event types.",
+            "enum": ["order.shipped", "order.captured", "order.refunded", "payout.paid", "payment.prepaid"]
+        },
+        "schema_version": {
+            "type": "integer",
+            "description": "Contract version. The v2 envelope is schema_version 2; the v1 mirror is schema_version 1.",
+            "const": 2
+        },
+        "occurred_at": {
+            "type": "string",
+            "description": "RFC 3339 timestamp, UTC, Z suffix.",
+            "format": "date-time"
+        },
+        "data": {
+            "type": "object",
+            "description": "Per-event-type payload. Validated against the matching payload schema selected by event_type."
+        }
+    }
+}

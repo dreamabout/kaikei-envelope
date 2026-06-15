@@ -1,9 +1,9 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://github.com/dreamabout/kaikei-envelope/schemas/v1/order_refunded.payload.schema.json",
-    "title": "order.refunded payload (v1 mirror)",
-    "description": "Mirrors validateRefundedData() in Kaikei's PayloadValidator. The positive-amount and refund-sum invariants are enforced PHP-side.",
+    "$id": "https://github.com/dreamabout/kaikei-envelope/schemas/v2/order_refunded.payload.schema.json",
+    "title": "order.refunded payload",
     "type": "object",
+    "additionalProperties": false,
     "required": ["order_id", "reason", "items", "refund_payments"],
     "properties": {
         "order_id": { "type": "string", "minLength": 1 },
@@ -22,20 +22,19 @@
             "items": { "$ref": "#/$defs/refund_payment" }
         },
         "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
-        "fx_rate_to_dkk": { "type": "string", "pattern": "^\\d+(\\.\\d+)?$" },
-        "prepayment_event_id": { "type": "string", "pattern": "^([0-9A-HJKMNP-TV-Z]{26}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$" },
+        "fx_rate": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
+        "prepayment_event_id": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$" },
         "credit_note_number": { "type": "string", "minLength": 1 }
     },
     "$defs": {
-        "decimal": { "type": "string", "pattern": "^-?\\d+(\\.\\d+)?$" },
         "item": {
             "type": "object",
             "required": ["type", "gross_amount", "vat_amount", "vat_rate"],
             "properties": {
                 "type": { "type": "string", "enum": ["physical", "gift_card", "digital"] },
-                "gross_amount": { "$ref": "#/$defs/decimal" },
-                "vat_amount": { "$ref": "#/$defs/decimal" },
-                "vat_rate": { "$ref": "#/$defs/decimal" }
+                "gross_amount": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
+                "vat_amount": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
+                "vat_rate": { "type": "string", "pattern": "^-?\\d+\\.\\d{2,4}$" }
             }
         },
         "refund_payment": {
@@ -45,7 +44,7 @@
                 "gateway": { "type": "string", "minLength": 1 },
                 "original_transaction_id": { "type": "string", "minLength": 1 },
                 "refund_transaction_id": { "type": "string", "minLength": 1 },
-                "amount": { "$ref": "#/$defs/decimal" }
+                "amount": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" }
             }
         }
     }

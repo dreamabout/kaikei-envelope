@@ -1,0 +1,18 @@
+{
+    "order_id": "O-100",
+    "customer": {
+        "country_code": "DK",
+        "is_b2b": true,
+        "customer_id": "C-42",
+        "name": "Acme ApS",
+        "vat_number": "DK12345678",
+        "email": "ap@acme.example",
+        "address": { "street": "Vej 1", "city": "Aarhus", "postal_code": "8000", "country": "DK" }
+    },
+    "items": [
+        { "type": "physical", "gross_amount": "125.00", "vat_amount": "25.00", "vat_rate": "0.25" }
+    ],
+    "currency": "EUR",
+    "fx_rate_to_dkk": "7.4521",
+    "invoice_number": "INV-2026-0001"
+}

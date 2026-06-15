@@ -1,9 +1,9 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://github.com/dreamabout/kaikei-envelope/schemas/v1/order_shipped.payload.schema.json",
-    "title": "order.shipped payload",
+    "title": "order.shipped payload (v1 mirror)",
+    "description": "Mirrors validateShippedData() in Kaikei's PayloadValidator. Data objects are intentionally NOT additionalProperties:false (Kaikei is lenient on unknown data keys). B2B-conditional required fields (customer_id, vat_number, address, email-unless-EAN) are enforced PHP-side, not by this schema.",
     "type": "object",
-    "additionalProperties": false,
     "required": ["order_id", "customer", "items"],
     "properties": {
         "order_id": { "type": "string", "minLength": 1 },
@@ -14,30 +14,33 @@
             "items": { "$ref": "#/$defs/item" }
         },
         "currency": { "$ref": "#/$defs/currency" },
-        "fx_rate": { "$ref": "#/$defs/decimal" },
-        "prepayment_event_id": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$" },
-        "invoice_number": { "type": "string", "minLength": 1 },
-        "ean_number": { "type": "string", "pattern": "^[0-9]{13}$" }
+        "fx_rate_to_dkk": { "$ref": "#/$defs/positive_decimal" },
+        "prepayment_event_id": { "$ref": "#/$defs/ulid_or_uuid" },
+        "invoice_number": { "type": "string", "minLength": 1 }
     },
     "$defs": {
-        "decimal": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
+        "decimal": { "type": "string", "pattern": "^-?\\d+(\\.\\d+)?$" },
+        "positive_decimal": { "type": "string", "pattern": "^\\d+(\\.\\d+)?$" },
         "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
+        "ulid_or_uuid": { "type": "string", "pattern": "^([0-9A-HJKMNP-TV-Z]{26}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$" },
         "customer": {
             "type": "object",
             "required": ["country_code", "is_b2b"],
             "properties": {
-                "country_code": { "type": "string", "pattern": "^[A-Z]{2}$" },
+                "country_code": { "type": "string" },
                 "is_b2b": { "type": "boolean" },
+                "customer_id": { "type": "string" },
                 "name": { "type": "string" },
                 "email": { "type": "string" },
-                "ean_number": { "type": "string", "pattern": "^[0-9]{13}$" },
+                "vat_number": { "type": "string" },
+                "ean_number": { "type": "string", "pattern": "^\\d{13}$" },
                 "address": {
                     "type": "object",
                     "properties": {
                         "street": { "type": "string" },
-                        "zip": { "type": "string" },
                         "city": { "type": "string" },
-                        "country_code": { "type": "string", "pattern": "^[A-Z]{2}$" }
+                        "postal_code": { "type": "string" },
+                        "country": { "type": "string" }
                     }
                 }
             }
@@ -47,9 +50,9 @@
             "required": ["type", "gross_amount", "vat_amount", "vat_rate"],
             "properties": {
                 "type": { "type": "string", "enum": ["physical", "gift_card", "digital"] },
-                "gross_amount": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
-                "vat_amount": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
-                "vat_rate": { "type": "string", "pattern": "^-?\\d+\\.\\d{2,4}$" }
+                "gross_amount": { "$ref": "#/$defs/decimal" },
+                "vat_amount": { "$ref": "#/$defs/decimal" },
+                "vat_rate": { "$ref": "#/$defs/decimal" }
             }
         }
     }

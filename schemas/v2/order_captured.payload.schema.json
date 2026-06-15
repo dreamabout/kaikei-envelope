@@ -1,20 +1,17 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://github.com/dreamabout/kaikei-envelope/schemas/v1/order_captured.payload.schema.json",
-    "title": "order.captured payload (v1 mirror)",
-    "description": "Mirrors validateCapturedData() in Kaikei's PayloadValidator.",
+    "$id": "https://github.com/dreamabout/kaikei-envelope/schemas/v2/order_captured.payload.schema.json",
+    "title": "order.captured payload",
     "type": "object",
+    "additionalProperties": false,
     "required": ["order_id", "gateway", "transaction_id", "amount", "captured_at"],
     "properties": {
         "order_id": { "type": "string", "minLength": 1 },
         "gateway": { "type": "string", "minLength": 1 },
         "transaction_id": { "type": "string", "minLength": 1 },
-        "amount": { "$ref": "#/$defs/decimal" },
+        "amount": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
         "captured_at": { "type": "string", "format": "date-time" },
         "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
-        "fx_rate_to_dkk": { "type": "string", "pattern": "^\\d+(\\.\\d+)?$" }
-    },
-    "$defs": {
-        "decimal": { "type": "string", "pattern": "^-?\\d+(\\.\\d+)?$" }
+        "fx_rate": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" }
     }
 }

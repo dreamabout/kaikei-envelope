@@ -30,7 +30,10 @@ use ReflectionClass;
  */
 final class SchemaDtoEquivalenceTest extends TestCase
 {
-    private const SCHEMA_DIR = __DIR__ . '/../../schemas/v1';
+    // The DTOs (src/Payload/*) model the v2 canonical-forward
+    // contract. The v1 mirror is validation-only (no DTO round-trip),
+    // so the equivalence gate compares against schemas/v2/.
+    private const SCHEMA_DIR = __DIR__ . '/../../schemas/v2';
 
     /**
      * @dataProvider schemaDtoPairs

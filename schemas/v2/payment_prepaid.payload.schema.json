@@ -1,9 +1,9 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://github.com/dreamabout/kaikei-envelope/schemas/v1/payment_prepaid.payload.schema.json",
-    "title": "payment.prepaid payload (v1 mirror)",
-    "description": "Mirrors validatePrepaidData() in Kaikei's PayloadValidator. Note: unlike order.shipped, the prepaid validator does NOT enforce the B2B customer fields -- only country_code + is_b2b are required on the customer.",
+    "$id": "https://github.com/dreamabout/kaikei-envelope/schemas/v2/payment_prepaid.payload.schema.json",
+    "title": "payment.prepaid payload",
     "type": "object",
+    "additionalProperties": false,
     "required": ["order_id", "customer", "gateway", "transaction_id", "prepaid_at", "items"],
     "properties": {
         "order_id": { "type": "string", "minLength": 1 },
@@ -17,29 +17,28 @@
             "items": { "$ref": "#/$defs/item" }
         },
         "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
-        "fx_rate_to_dkk": { "type": "string", "pattern": "^\\d+(\\.\\d+)?$" },
+        "fx_rate": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
         "invoice_number": { "type": "string", "minLength": 1 }
     },
     "$defs": {
-        "decimal": { "type": "string", "pattern": "^-?\\d+(\\.\\d+)?$" },
         "customer": {
             "type": "object",
             "required": ["country_code", "is_b2b"],
             "properties": {
-                "country_code": { "type": "string" },
+                "country_code": { "type": "string", "pattern": "^[A-Z]{2}$" },
                 "is_b2b": { "type": "boolean" },
-                "customer_id": { "type": "string" },
+                "customer_id": { "type": "string", "minLength": 1 },
                 "name": { "type": "string" },
                 "email": { "type": "string" },
                 "vat_number": { "type": "string" },
-                "ean_number": { "type": "string", "pattern": "^\\d{13}$" },
+                "ean_number": { "type": "string", "pattern": "^[0-9]{13}$" },
                 "address": {
                     "type": "object",
                     "properties": {
                         "street": { "type": "string" },
                         "city": { "type": "string" },
                         "postal_code": { "type": "string" },
-                        "country": { "type": "string" }
+                        "country": { "type": "string", "pattern": "^[A-Z]{2}$" }
                     }
                 }
             }
@@ -49,9 +48,9 @@
             "required": ["type", "gross_amount", "vat_amount", "vat_rate"],
             "properties": {
                 "type": { "type": "string", "enum": ["physical", "gift_card", "digital"] },
-                "gross_amount": { "$ref": "#/$defs/decimal" },
-                "vat_amount": { "$ref": "#/$defs/decimal" },
-                "vat_rate": { "$ref": "#/$defs/decimal" }
+                "gross_amount": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
+                "vat_amount": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
+                "vat_rate": { "type": "string", "pattern": "^-?\\d+\\.\\d{2,4}$" }
             }
         }
     }
