@@ -40,6 +40,34 @@ final class PayloadRoundTripTest extends TestCase
         self::assertSame($in, $out);
     }
 
+    public function testOrderShippedRoundTripWithB2BCustomer(): void
+    {
+        // The B2B customer fields (customer_id, vat_number, full
+        // address) required for e-conomic B2B invoice issuance flow
+        // through the opaque `customer` array unchanged -- the DTO
+        // does not flatten them into typed top-level properties.
+        $in = [
+            'order_id' => 'O-102',
+            'customer' => [
+                'country_code' => 'DK',
+                'is_b2b'       => true,
+                'customer_id'  => 'C-42',
+                'name'         => 'Acme ApS',
+                'vat_number'   => 'DK12345678',
+                'email'        => 'ap@acme.example',
+                'address'      => ['street' => 'Vej 1', 'city' => 'Aarhus', 'postal_code' => '8000', 'country' => 'DK'],
+            ],
+            'items' => [
+                ['type' => 'physical', 'gross_amount' => '125.00', 'vat_amount' => '25.00', 'vat_rate' => '0.25'],
+            ],
+        ];
+
+        $out = OrderShippedPayload::fromArray($in)->toArray();
+        self::assertSame($in, $out);
+        self::assertSame('C-42', $out['customer']['customer_id']);
+        self::assertSame('DK', $out['customer']['address']['country']);
+    }
+
     public function testOrderShippedDropsAbsentOptionals(): void
     {
         $in = [
