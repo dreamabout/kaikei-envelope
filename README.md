@@ -138,6 +138,7 @@ $envelope = Envelope::fromArray($decoded);
 | `order.refunded` | CreditNoteIssued | credit-note voucher |
 | `payment.prepaid` | InvoiceIssued → prepaid branch | prepayment liability |
 | `payout.paid` | SettlementImported | payout pass |
+| `order.fee` | provider fee / chargeback against an order | fee → gateway_fee / gateway_clearing |
 
 Field references per event live under [`docs/events/`](docs/events/).
 

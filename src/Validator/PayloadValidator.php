@@ -247,8 +247,30 @@ final class PayloadValidator
             EventType::PaymentPrepaid => $this->itemLineErrors($data),
             EventType::OrderRefunded => $this->refundErrors($data),
             EventType::PayoutPaid => $this->payoutErrors($data),
+            EventType::OrderFee => $this->feeErrors($data),
             EventType::OrderCaptured => [],
         };
+    }
+
+    /**
+     * A booked fee (processing or chargeback) must be a positive amount.
+     * fee_type membership is enforced by the schema enum; this guards the
+     * one cross-field rule the schema can't express for a decimal string.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return list<FieldError>
+     */
+    private function feeErrors(array $data): array
+    {
+        // Reached only after the data schema validated: amount is a
+        // present decimal string.
+        $amount = (string) ($data['amount'] ?? '0');
+        if (\bccomp($amount, '0.00', 2) <= 0) {
+            return [new FieldError('data.amount', 'invariant_violated', "Fee amount must be positive (got {$amount}).")];
+        }
+
+        return [];
     }
 
     /**

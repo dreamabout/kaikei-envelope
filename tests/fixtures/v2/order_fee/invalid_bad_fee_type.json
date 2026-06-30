@@ -1,0 +1,6 @@
+{
+    "order_id": "O-200",
+    "gateway": "paypal",
+    "amount": "3.00",
+    "fee_type": "bogus"
+}

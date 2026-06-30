@@ -123,7 +123,7 @@ final class SchemaLintTest extends TestCase
      */
     private static function eventTypes(): array
     {
-        return ['order_shipped', 'order_captured', 'order_refunded', 'payout_paid', 'payment_prepaid'];
+        return ['order_shipped', 'order_captured', 'order_refunded', 'payout_paid', 'payment_prepaid', 'order_fee'];
     }
 
     private function readSchema(string $file): \stdClass

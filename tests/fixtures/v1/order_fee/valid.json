@@ -1,0 +1,9 @@
+{
+    "order_id": "O-200",
+    "gateway": "paypal",
+    "transaction_id": "pi_abc123",
+    "amount": "3.0",
+    "fee_type": "chargeback",
+    "currency": "DKK",
+    "fx_rate": "1.0"
+}

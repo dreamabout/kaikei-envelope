@@ -1,0 +1,9 @@
+{
+    "order_id": "O-200",
+    "gateway": "paypal",
+    "transaction_id": "pi_abc123",
+    "amount": "3.00",
+    "fee_type": "processing",
+    "currency": "DKK",
+    "fx_rate": "1.00"
+}

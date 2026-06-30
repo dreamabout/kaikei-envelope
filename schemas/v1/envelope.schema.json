@@ -14,7 +14,7 @@
         },
         "event_type": {
             "type": "string",
-            "enum": ["order.shipped", "order.captured", "order.refunded", "payout.paid", "payment.prepaid"]
+            "enum": ["order.shipped", "order.captured", "order.refunded", "payout.paid", "payment.prepaid", "order.fee"]
         },
         "schema_version": {
             "type": "integer",

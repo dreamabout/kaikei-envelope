@@ -6,6 +6,7 @@ namespace Dreamabout\KaikeiEnvelope\Tests\Schema;
 
 use Dreamabout\KaikeiEnvelope\Envelope;
 use Dreamabout\KaikeiEnvelope\Payload\OrderCapturedPayload;
+use Dreamabout\KaikeiEnvelope\Payload\OrderFeePayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderRefundedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderShippedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\PaymentPrepaidPayload;
@@ -115,6 +116,7 @@ final class SchemaDtoEquivalenceTest extends TestCase
         yield 'order.refunded'  => [self::SCHEMA_DIR . '/order_refunded.payload.schema.json', OrderRefundedPayload::class];
         yield 'payout.paid'     => [self::SCHEMA_DIR . '/payout_paid.payload.schema.json', PayoutPaidPayload::class];
         yield 'payment.prepaid' => [self::SCHEMA_DIR . '/payment_prepaid.payload.schema.json', PaymentPrepaidPayload::class];
+        yield 'order.fee'       => [self::SCHEMA_DIR . '/order_fee.payload.schema.json', OrderFeePayload::class];
     }
 
     /**

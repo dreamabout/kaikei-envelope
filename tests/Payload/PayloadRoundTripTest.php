@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Dreamabout\KaikeiEnvelope\Tests\Payload;
 
 use Dreamabout\KaikeiEnvelope\Payload\OrderCapturedPayload;
+use Dreamabout\KaikeiEnvelope\Payload\OrderFeePayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderRefundedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderShippedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\PaymentPrepaidPayload;
@@ -95,6 +96,37 @@ final class PayloadRoundTripTest extends TestCase
         ];
 
         self::assertSame($in, OrderCapturedPayload::fromArray($in)->toArray());
+    }
+
+    public function testOrderFeeRoundTripWithAllFields(): void
+    {
+        $in = [
+            'order_id'       => 'O-200',
+            'gateway'        => 'paypal',
+            'amount'         => '3.00',
+            'fee_type'       => 'processing',
+            'transaction_id' => 'pi_abc123',
+            'currency'       => 'DKK',
+            'fx_rate'        => '1.00',
+        ];
+
+        self::assertSame($in, OrderFeePayload::fromArray($in)->toArray());
+    }
+
+    public function testOrderFeeDropsAbsentOptionals(): void
+    {
+        $in = [
+            'order_id' => 'O-201',
+            'gateway'  => 'paypal',
+            'amount'   => '5.00',
+            'fee_type' => 'chargeback',
+        ];
+
+        $out = OrderFeePayload::fromArray($in)->toArray();
+        self::assertSame($in, $out);
+        self::assertArrayNotHasKey('transaction_id', $out);
+        self::assertArrayNotHasKey('currency', $out);
+        self::assertArrayNotHasKey('fx_rate', $out);
     }
 
     public function testOrderRefundedRoundTrip(): void

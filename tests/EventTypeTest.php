@@ -15,9 +15,9 @@ use PHPUnit\Framework\TestCase;
  */
 final class EventTypeTest extends TestCase
 {
-    public function testFiveCasesExist(): void
+    public function testSixCasesExist(): void
     {
-        self::assertCount(5, EventType::cases());
+        self::assertCount(6, EventType::cases());
     }
 
     /**
@@ -46,5 +46,6 @@ final class EventTypeTest extends TestCase
         yield 'order.refunded'  => ['order.refunded',  EventType::OrderRefunded];
         yield 'payout.paid'     => ['payout.paid',     EventType::PayoutPaid];
         yield 'payment.prepaid' => ['payment.prepaid', EventType::PaymentPrepaid];
+        yield 'order.fee'       => ['order.fee',       EventType::OrderFee];
     }
 }

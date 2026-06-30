@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Dreamabout\KaikeiEnvelope;
 
 /**
- * The five event types the kaikei v1 envelope contract carries.
+ * The event types the kaikei envelope contract carries.
  *
  * Backed by their wire-format string -- match exactly what
  * Dreamshop's `KaikeiPayloadAssembler` produces and what Kaikei's
@@ -13,6 +13,10 @@ namespace Dreamabout\KaikeiEnvelope;
  * string without a MAJOR version bump (it would invalidate every
  * envelope currently in flight + every audit row in
  * `kaikei_delivery_log`).
+ *
+ * `order.fee` (added 1.1.0) is additive: a standalone provider fee or
+ * adjustment against an order (processing or chargeback), decoupled
+ * from capture/payout timing. No `schema_version` bump.
  */
 enum EventType: string
 {
@@ -21,6 +25,7 @@ enum EventType: string
     case OrderRefunded  = 'order.refunded';
     case PayoutPaid     = 'payout.paid';
     case PaymentPrepaid = 'payment.prepaid';
+    case OrderFee       = 'order.fee';
 
     /**
      * Tolerant lookup -- returns null on unknown input rather than
