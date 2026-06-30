@@ -1,0 +1,18 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://github.com/dreamabout/kaikei-envelope/schemas/v2/order_fee.payload.schema.json",
+    "title": "order.fee payload",
+    "description": "A standalone provider fee or adjustment against an order (processing or chargeback), decoupled from capture/payout timing. The receiver books it debit gateway_fee(gateway, fee_type) / credit gateway_clearing(gateway). amount > 0 is enforced as a cross-field invariant in PayloadValidator.",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["order_id", "gateway", "amount", "fee_type"],
+    "properties": {
+        "order_id": { "type": "string", "minLength": 1 },
+        "gateway": { "type": "string", "minLength": 1 },
+        "transaction_id": { "type": "string", "minLength": 1 },
+        "amount": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
+        "fee_type": { "type": "string", "enum": ["processing", "chargeback"] },
+        "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
+        "fx_rate": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" }
+    }
+}

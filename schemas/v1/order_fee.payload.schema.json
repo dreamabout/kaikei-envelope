@@ -1,0 +1,20 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://github.com/dreamabout/kaikei-envelope/schemas/v1/order_fee.payload.schema.json",
+    "title": "order.fee payload (v1 mirror)",
+    "description": "v1 mirror of order.fee. order.fee is additive (introduced in package 1.1.0); the v1 variant uses the lenient decimal/currency conventions of the rest of the v1 contract. amount > 0 is enforced as a cross-field invariant in PayloadValidator.",
+    "type": "object",
+    "required": ["order_id", "gateway", "amount", "fee_type"],
+    "properties": {
+        "order_id": { "type": "string", "minLength": 1 },
+        "gateway": { "type": "string", "minLength": 1 },
+        "transaction_id": { "type": "string", "minLength": 1 },
+        "amount": { "$ref": "#/$defs/decimal" },
+        "fee_type": { "type": "string", "enum": ["processing", "chargeback"] },
+        "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
+        "fx_rate": { "$ref": "#/$defs/decimal" }
+    },
+    "$defs": {
+        "decimal": { "type": "string", "pattern": "^-?\\d+(\\.\\d+)?$" }
+    }
+}

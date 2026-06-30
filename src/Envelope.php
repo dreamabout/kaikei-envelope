@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Dreamabout\KaikeiEnvelope;
 
 use Dreamabout\KaikeiEnvelope\Payload\OrderCapturedPayload;
+use Dreamabout\KaikeiEnvelope\Payload\OrderFeePayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderRefundedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderShippedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\PaymentPrepaidPayload;
@@ -77,6 +78,7 @@ final class Envelope
             EventType::OrderRefunded  => OrderRefundedPayload::fromArray($rawData),
             EventType::PayoutPaid     => PayoutPaidPayload::fromArray($rawData),
             EventType::PaymentPrepaid => PaymentPrepaidPayload::fromArray($rawData),
+            EventType::OrderFee       => OrderFeePayload::fromArray($rawData),
         };
 
         return new self(

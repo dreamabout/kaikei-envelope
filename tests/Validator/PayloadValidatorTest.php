@@ -26,6 +26,7 @@ final class PayloadValidatorTest extends TestCase
         'order_refunded'  => 'order.refunded',
         'payout_paid'     => 'payout.paid',
         'payment_prepaid' => 'payment.prepaid',
+        'order_fee'       => 'order.fee',
     ];
 
     private PayloadValidator $validator;
@@ -218,6 +219,37 @@ final class PayloadValidatorTest extends TestCase
     }
 
     // ----- cross-field invariants (422) ----------------------------
+
+    public function testFeeAmountMustBePositive(): void
+    {
+        $data = [
+            'order_id' => 'O-1',
+            'gateway'  => 'paypal',
+            'amount'   => '0.00',
+            'fee_type' => 'processing',
+        ];
+
+        $result = $this->validator->validate($this->envelope(2, 'order.fee', $data));
+
+        self::assertSame(ValidationResult::HTTP_UNPROCESSABLE, $result->httpStatus);
+        self::assertSame('invariant_violated', $this->firstError($result)->code);
+        self::assertSame('data.amount', $this->firstError($result)->field);
+    }
+
+    public function testNegativeFeeAmountRejected(): void
+    {
+        $data = [
+            'order_id' => 'O-1',
+            'gateway'  => 'paypal',
+            'amount'   => '-3.00',
+            'fee_type' => 'chargeback',
+        ];
+
+        $result = $this->validator->validate($this->envelope(2, 'order.fee', $data));
+
+        self::assertSame('invariant_violated', $this->firstError($result)->code);
+        self::assertSame('data.amount', $this->firstError($result)->field);
+    }
 
     public function testPayoutArithmeticViolation(): void
     {

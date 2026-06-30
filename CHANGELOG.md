@@ -9,7 +9,24 @@ and this project adheres to [Semantic Versioning][semver].
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.1.0...HEAD
+
+## [1.1.0] - 2026-06-30
+
+### Added
+- **`order.fee` event type** — a standalone provider fee or adjustment
+  booked against an order (`fee_type`: `processing` | `chargeback`),
+  decoupled from capture/payout timing. Additive: no `schema_version`
+  bump; the `event_type` enum gains `order.fee` in both v1 and v2
+  envelope schemas.
+- `OrderFeePayload` DTO (`fromArray()`/`toArray()`), `schemas/v{1,2}/
+  order_fee.payload.schema.json`, `Envelope::fromArray()` mapping, and
+  the `amount > 0` cross-field invariant in `PayloadValidator`
+  (`invariant_violated` on `data.amount`). `fee_type` membership is
+  schema-enforced (`invalid_data`).
+- Docs: `docs/events/order_fee.md`; v1/v2 `valid` + `invalid` fixtures.
+
+[1.1.0]: https://github.com/dreamabout/kaikei-envelope/compare/v1.0.0...v1.1.0
 
 ## [1.0.0] - 2026-06-16
 
