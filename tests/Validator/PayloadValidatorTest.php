@@ -466,6 +466,84 @@ final class PayloadValidatorTest extends TestCase
         );
     }
 
+    // ----- no-cost-of-goods item types (shipping/fee/giftwrapping) --
+
+    public function testNoCogsItemTypesAcceptedWithoutUnitCost(): void
+    {
+        $data = [
+            'order_id' => 'O-1',
+            'customer' => ['country_code' => 'DK', 'is_b2b' => false],
+            'items'    => [
+                ['type' => 'shipping', 'gross_amount' => '50.00', 'vat_amount' => '10.00', 'vat_rate' => '0.25'],
+                ['type' => 'fee', 'gross_amount' => '20.00', 'vat_amount' => '4.00', 'vat_rate' => '0.25'],
+                ['type' => 'giftwrapping', 'gross_amount' => '15.00', 'vat_amount' => '3.00', 'vat_rate' => '0.25'],
+            ],
+        ];
+
+        $result = $this->validator->validate($this->envelope(2, 'order.shipped', $data));
+
+        self::assertTrue($result->isValid(), $this->dump($result));
+    }
+
+    public function testShippingLineWithUnitCostRejected(): void
+    {
+        $data = [
+            'order_id' => 'O-1',
+            'customer' => ['country_code' => 'DK', 'is_b2b' => false],
+            'items'    => [
+                ['type' => 'shipping', 'gross_amount' => '50.00', 'vat_amount' => '10.00', 'vat_rate' => '0.25', 'unit_cost' => '10.00'],
+            ],
+        ];
+
+        $result = $this->validator->validate($this->envelope(2, 'order.shipped', $data));
+
+        self::assertSame(ValidationResult::HTTP_UNPROCESSABLE, $result->httpStatus);
+        self::assertSame('invariant_violated', $this->firstError($result)->code);
+        self::assertSame('data.items[0].unit_cost', $this->firstError($result)->field);
+    }
+
+    public function testNoCogsUnitCostRuleAppliesToPrepaid(): void
+    {
+        $data = [
+            'order_id'       => 'O-1',
+            'customer'       => ['country_code' => 'DK', 'is_b2b' => false],
+            'gateway'        => 'epay',
+            'transaction_id' => 'epay_tx_1',
+            'prepaid_at'     => self::VALID_OCCURRED_AT,
+            'items'          => [
+                ['type' => 'fee', 'gross_amount' => '20.00', 'vat_amount' => '4.00', 'vat_rate' => '0.25', 'unit_cost' => '5.00'],
+            ],
+        ];
+
+        $result = $this->validator->validate($this->envelope(2, 'payment.prepaid', $data));
+
+        self::assertSame(ValidationResult::HTTP_UNPROCESSABLE, $result->httpStatus);
+        self::assertSame('invariant_violated', $this->firstError($result)->code);
+        self::assertSame('data.items[0].unit_cost', $this->firstError($result)->field);
+    }
+
+    public function testNoCogsUnitCostRuleAppliesToRefunded(): void
+    {
+        // Refund arithmetic is balanced so refundErrors() is empty and the
+        // ONLY failure surfaced is the no-COGS unit_cost invariant.
+        $data = [
+            'order_id' => 'O-1',
+            'reason'   => 'customer_request',
+            'items'    => [
+                ['type' => 'giftwrapping', 'gross_amount' => '-15.00', 'vat_amount' => '-3.00', 'vat_rate' => '0.25', 'unit_cost' => '5.00'],
+            ],
+            'refund_payments' => [
+                ['gateway' => 'stripe', 'original_transaction_id' => 'a', 'refund_transaction_id' => 'b', 'amount' => '15.00'],
+            ],
+        ];
+
+        $result = $this->validator->validate($this->envelope(2, 'order.refunded', $data));
+
+        self::assertSame(ValidationResult::HTTP_UNPROCESSABLE, $result->httpStatus);
+        self::assertSame('invariant_violated', $this->firstError($result)->code);
+        self::assertSame('data.items[0].unit_cost', $this->firstError($result)->field);
+    }
+
     /**
      * @return array<string,mixed>
      */
