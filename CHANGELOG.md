@@ -9,7 +9,18 @@ and this project adheres to [Semantic Versioning][semver].
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.2.0...HEAD
+
+## [1.2.0] - 2026-07-02
+
+### Added
+- **Optional `items[].unit_cost` on `order.shipped` and `order.refunded`
+  (v2)** — the DKK cost of one unit (cost of goods), a 2-decimal
+  non-negative string (`^\d+\.\d{2}$`). Additive and optional: events
+  that omit it still validate; no `schema_version` bump. Consumers
+  (kaikei) book vareforbrug/inventory from `unit_cost × quantity`.
+
+[1.2.0]: https://github.com/dreamabout/kaikei-envelope/compare/v1.1.0...v1.2.0
 
 ## [1.1.0] - 2026-06-30
 

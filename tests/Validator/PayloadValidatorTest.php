@@ -420,6 +420,85 @@ final class PayloadValidatorTest extends TestCase
         self::assertTrue($this->validator->validate($this->envelope(2, 'order.shipped', $data))->isValid());
     }
 
+    // ----- item unit_cost (optional cost-of-goods per unit) --------
+
+    public function testItemUnitCostAccepted(): void
+    {
+        $data = $this->validShippedData();
+        $data['items'][0]['unit_cost'] = '40.00';
+
+        self::assertTrue(
+            $this->validator->validate($this->envelope(2, 'order.shipped', $data))->isValid(),
+            $this->dump($this->validator->validate($this->envelope(2, 'order.shipped', $data))),
+        );
+    }
+
+    public function testMalformedItemUnitCostRejected(): void
+    {
+        $data = $this->validShippedData();
+        $data['items'][0]['unit_cost'] = 'not-a-number';
+
+        self::assertFalse(
+            $this->validator->validate($this->envelope(2, 'order.shipped', $data))->isValid(),
+            'a unit_cost that is not a 2-decimal amount must be rejected',
+        );
+    }
+
+    public function testRefundItemUnitCostAccepted(): void
+    {
+        $data = $this->validRefundData();
+        $data['items'][0]['unit_cost'] = '40.00';
+
+        self::assertTrue(
+            $this->validator->validate($this->envelope(2, 'order.refunded', $data))->isValid(),
+            $this->dump($this->validator->validate($this->envelope(2, 'order.refunded', $data))),
+        );
+    }
+
+    public function testMalformedRefundItemUnitCostRejected(): void
+    {
+        $data = $this->validRefundData();
+        $data['items'][0]['unit_cost'] = 'not-a-number';
+
+        self::assertFalse(
+            $this->validator->validate($this->envelope(2, 'order.refunded', $data))->isValid(),
+            'a refund unit_cost that is not a 2-decimal amount must be rejected',
+        );
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
+    private function validShippedData(): array
+    {
+        return [
+            'order_id' => 'O-100',
+            'customer' => ['country_code' => 'DK', 'is_b2b' => false],
+            'items'    => [
+                ['type' => 'physical', 'gross_amount' => '125.00', 'vat_amount' => '25.00', 'vat_rate' => '0.25'],
+            ],
+            'currency' => 'DKK',
+        ];
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
+    private function validRefundData(): array
+    {
+        return [
+            'order_id' => 'O-300',
+            'reason'   => 'customer_request',
+            'items'    => [
+                ['type' => 'physical', 'gross_amount' => '-100.00', 'vat_amount' => '-20.00', 'vat_rate' => '0.25'],
+            ],
+            'refund_payments' => [
+                ['gateway' => 'stripe', 'original_transaction_id' => 'pi_orig', 'refund_transaction_id' => 're_new', 'amount' => '100.00'],
+            ],
+            'credit_note_number' => 'CN-2026-0001',
+        ];
+    }
+
     // ----- helpers -------------------------------------------------
 
     /**
