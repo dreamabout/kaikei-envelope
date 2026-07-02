@@ -40,6 +40,12 @@ final class PayloadValidator
 
     private const EVENT_ID_PATTERN = '/^([0-9A-HJKMNP-TV-Z]{26}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$/';
 
+    /**
+     * Item line types that represent charges rather than sold goods, so
+     * they carry no cost of goods and must never include a unit_cost.
+     */
+    private const NO_COGS_ITEM_TYPES = ['shipping', 'fee', 'giftwrapping'];
+
     private readonly Validator $opis;
     private readonly string $schemaDir;
 
@@ -243,9 +249,9 @@ final class PayloadValidator
     private function checkInvariants(EventType $eventType, array $data): array
     {
         return match ($eventType) {
-            EventType::OrderShipped => [...$this->b2bCustomerErrors($data), ...$this->itemLineErrors($data)],
-            EventType::PaymentPrepaid => $this->itemLineErrors($data),
-            EventType::OrderRefunded => $this->refundErrors($data),
+            EventType::OrderShipped => [...$this->b2bCustomerErrors($data), ...$this->itemLineErrors($data), ...$this->noCogsItemErrors($data)],
+            EventType::PaymentPrepaid => [...$this->itemLineErrors($data), ...$this->noCogsItemErrors($data)],
+            EventType::OrderRefunded => [...$this->refundErrors($data), ...$this->noCogsItemErrors($data)],
             EventType::PayoutPaid => $this->payoutErrors($data),
             EventType::OrderFee => $this->feeErrors($data),
             EventType::OrderCaptured => [],
@@ -299,6 +305,36 @@ final class PayloadValidator
             }
             if ('gift_card' === ($item['type'] ?? null) && 0 !== \bccomp($vat, '0.00', 2)) {
                 $errors[] = new FieldError("{$prefix}.vat_amount", 'invariant_violated', "Gift-card lines must have vat_amount == '0.00'.");
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * No-cost-of-goods item lines (shipping, fee, giftwrapping) represent
+     * charges rather than sold goods, so they must never carry a
+     * unit_cost. Runs on every item-carrying event (shipped, prepaid,
+     * refunded) -- unlike itemLineErrors(), which order.refunded skips.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return list<FieldError>
+     */
+    private function noCogsItemErrors(array $data): array
+    {
+        $errors = [];
+        /** @var list<mixed> $items */
+        $items = \is_array($data['items'] ?? null) ? \array_values($data['items']) : [];
+        foreach ($items as $i => $rawItem) {
+            $item = (array) $rawItem;
+            $type = $item['type'] ?? null;
+            if (\in_array($type, self::NO_COGS_ITEM_TYPES, true) && \array_key_exists('unit_cost', $item)) {
+                $errors[] = new FieldError(
+                    "data.items[{$i}].unit_cost",
+                    'invariant_violated',
+                    \sprintf("Item type '%s' carries no cost of goods and must not include unit_cost.", (string) $type),
+                );
             }
         }
 

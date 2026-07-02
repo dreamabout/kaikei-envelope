@@ -178,3 +178,27 @@ arg, so no separate rotation method is needed.
 signature-scheme version, independent of the envelope
 `schema_version`. There is one signer/verifier, shared by both
 contract versions.
+
+## D6 — No-cost-of-goods item line types carry no `unit_cost`
+
+**Track:** item-types-shipping-fee-giftwrap
+
+**Decision:** `shipping`, `fee`, and `giftwrapping` join the v2 item
+`type` enum on `order.shipped`, `order.refunded`, and `payment.prepaid`.
+Because they are charge lines rather than sold goods, they carry no cost of
+goods, and the validator rejects any such line that includes `unit_cost`
+(`invariant_violated` on `data.items[<i>].unit_cost`).
+
+**Why the rule lives in PHP Tier 3, not the schema.** The project keeps
+type-conditional item rules in `PayloadValidator` (as with the `gift_card`
+zero-VAT rule) rather than expressing them as JSON-Schema `if/then`, so the
+cross-field rules read together in one place and stay parity-aligned with
+Kaikei. A dedicated `noCogsItemErrors()` helper is wired into all three
+item-carrying events — including `order.refunded`, which otherwise runs
+only `refundErrors()` in `checkInvariants()` — without extending the
+existing `gift_card`/`vat` rules' per-event scope.
+
+**Versioning.** Additive enum members on v2 → MINOR (`1.2.0` → `1.3.0`); no
+`schema_version` bump, mirroring the `order.fee` (1.1.0) precedent. The v1
+schemas stay frozen as the faithful mirror of Kaikei's deployed contract,
+so the new types are v2-only.
