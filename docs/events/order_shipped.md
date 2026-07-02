@@ -39,10 +39,11 @@ The B2B-conditional requirements are enforced by `PayloadValidator`
 
 - `vat_amount` must not exceed `gross_amount` on non-negative lines.
 - `gift_card` lines must have `vat_amount == "0.00"`.
-- `type` ∈ `physical | gift_card | digital | shipping | fee | giftwrapping`.
-- `shipping`, `fee`, and `giftwrapping` are charge lines with **no cost of
-  goods**: they must not include the optional `unit_cost` field
-  (`invariant_violated` on `data.items[<i>].unit_cost`).
+- `type` ∈ `physical | gift_card | digital | shipping | fee | giftwrapping | discount`.
+- `shipping`, `fee`, `giftwrapping`, and `discount` are charge/adjustment lines with
+  **no cost of goods**: they must not include the optional `unit_cost` field
+  (`invariant_violated` on `data.items[<i>].unit_cost`). `discount` is a reduction
+  line (negative amounts).
 
 ## Example (v2 envelope)
 
