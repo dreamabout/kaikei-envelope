@@ -1,0 +1,19 @@
+{
+  "generated_at": "2026-07-02T16:56:25Z",
+  "git_commit": "5f80c542038b3afe2f2908594333072cd8673bf5",
+  "total_files_scanned": 27,
+  "signals": {
+    "backend_routes": { "count": 0, "sample_files": [] },
+    "frontend_routes": { "count": 0, "sample_files": [] },
+    "components": { "count": 0, "sample_files": [] },
+    "services": { "count": 3, "sample_files": ["src/Validator/PayloadValidator.php", "src/Signature/WebhookSigner.php", "src/Signature/SignatureVerifier.php"] },
+    "data_models": { "count": 9, "sample_files": ["src/Payload/OrderShippedPayload.php", "src/Payload/OrderFeePayload.php", "src/Envelope.php"] },
+    "auth_files": { "count": 3, "sample_files": ["src/Signature/WebhookSigner.php", "src/Signature/SignatureVerifier.php", "src/Signature/VerifyResult.php"] },
+    "state_management": { "count": 0, "sample_files": [] },
+    "background_jobs": { "count": 0, "sample_files": [] },
+    "persistence": { "count": 0, "sample_files": [] },
+    "test_infra": { "count": 10, "sample_files": ["tests/Validator/PayloadValidatorTest.php", "tests/Schema/SchemaLintTest.php", "tests/Schema/SchemaDtoEquivalenceTest.php"] },
+    "config_files": { "count": 4, "sample_files": ["composer.json", "phpstan.neon", ".php-cs-fixer.dist.php"] },
+    "schemas": { "count": 14, "sample_files": ["schemas/v2/order_shipped.payload.schema.json", "schemas/v2/order_fee.payload.schema.json"] }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "run_id": "init-5f80c54-kaikei-envelope",
+  "started_at": "2026-07-02T16:56:25Z",
+  "completed_at": "2026-07-02T16:56:25Z",
+  "run_type": "init",
+  "status": "completed",
+  "phases_completed": ["phase_1", "phase_2", "phase_3", "phase_4", "phase_5"],
+  "phases_remaining": [],
+  "files_analyzed": 27,
+  "files_generated": [
+    "draft/architecture.md",
+    "draft/.ai-context.md",
+    "draft/.ai-profile.md",
+    "draft/product.md",
+    "draft/tech-stack.md",
+    "draft/workflow.md",
+    "draft/guardrails.md",
+    "draft/tracks.md",
+    "draft/index.md",
+    "draft/metadata.json"
+  ],
+  "tier": 1,
+  "tier_label": "micro",
+  "init_mode": "monolith",
+  "unresolved_questions": [
+    "Success Criteria and Non-Goals in product.md were inferred from README + source, not stated by the maintainer — confirm they match intent.",
+    "Feature request that triggered init ('add a shipping type for order line items, and a fee type') is ambiguous: 'a fee type' could mean a new item type value 'fee' OR a new order.fee fee_type enum member — to be resolved in the new-track intake."
+  ],
+  "active_focus_areas": ["data_models", "schemas", "services"]
+}
