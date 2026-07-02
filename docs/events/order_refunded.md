@@ -13,7 +13,7 @@ Schemas:
 |---|---|---|---|
 | `order_id` | string | yes | Producer order identifier. |
 | `reason` | string | yes | `customer_request | chargeback | merchant_initiated | other`. |
-| `items` | array | yes | Non-empty; refunded lines carry **negative** `gross_amount`/`vat_amount`. |
+| `items` | array | yes | Non-empty; refunded lines carry **negative** `gross_amount`/`vat_amount`. Optional per-item `unit_cost` (positive DKK cost of one unit, `^\d+\.\d{2}$`) + `quantity` reverse the cost-of-goods booking — the receiver restocks inventory at `unit_cost × quantity`. Omit → no cost reversal. Added in schema **v1.2.0**. |
 | `refund_payments` | array | yes | Non-empty; each `{gateway, original_transaction_id, refund_transaction_id, amount}`. |
 | `currency` | string | no | ISO 4217. |
 | `fx_rate` (v2) / `fx_rate_to_dkk` (v1) | string | no | Positive decimal rate to DKK. |
@@ -38,7 +38,7 @@ Schemas:
         "order_id": "ORD-300",
         "reason": "customer_request",
         "items": [
-            { "type": "physical", "gross_amount": "-100.00", "vat_amount": "-20.00", "vat_rate": "0.25" }
+            { "type": "physical", "gross_amount": "-100.00", "vat_amount": "-20.00", "vat_rate": "0.25", "unit_cost": "40.00", "quantity": 1 }
         ],
         "refund_payments": [
             { "gateway": "stripe", "original_transaction_id": "pi_orig", "refund_transaction_id": "re_new", "amount": "100.00" }

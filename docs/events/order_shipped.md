@@ -13,7 +13,7 @@ Schemas:
 |---|---|---|---|
 | `order_id` | string | yes | Producer order identifier. |
 | `customer` | object | yes | See customer fields below. |
-| `items` | array | yes | Non-empty; each item `{type, gross_amount, vat_amount, vat_rate}`. |
+| `items` | array | yes | Non-empty; each item `{type, gross_amount, vat_amount, vat_rate}` (+ optional `unit_cost`, `quantity`) — see [Item](#item). |
 | `currency` | string | no | ISO 4217 (`^[A-Z]{3}$`); defaults to DKK downstream. |
 | `fx_rate` (v2) / `fx_rate_to_dkk` (v1) | string | no | Positive decimal rate to DKK at supply time. |
 | `prepayment_event_id` | string | no | ULID linking back to a prior `payment.prepaid`. |
@@ -35,6 +35,17 @@ Schemas:
 The B2B-conditional requirements are enforced by `PayloadValidator`
 (they can't be expressed in the flat JSON schema).
 
+### Item
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `type` | string | yes | `physical` \| `gift_card` \| `digital`. |
+| `gross_amount` | string | yes | 2-decimal amount (`^-?\d+\.\d{2}$`). |
+| `vat_amount` | string | yes | 2-decimal amount. |
+| `vat_rate` | string | yes | Decimal rate, e.g. `0.25`. |
+| `unit_cost` | string | no | **DKK cost of ONE unit** (cost of goods) — 2-decimal, non-negative (`^\d+\.\d{2}$`). When present, the receiver books vareforbrug/inventory at `unit_cost × quantity`; **omit it and no cost-of-goods is booked** (safe to roll out incrementally). Only meaningful for `physical` items. Added in schema **v1.2.0**. |
+| `quantity` | int | no | Units on the line; defaults to `1`. Multiplies `unit_cost`. |
+
 ## Item line invariants
 
 - `vat_amount` must not exceed `gross_amount` on non-negative lines.
@@ -53,7 +64,7 @@ The B2B-conditional requirements are enforced by `PayloadValidator`
         "order_id": "ORD-001",
         "customer": { "country_code": "DK", "is_b2b": false },
         "items": [
-            { "type": "physical", "gross_amount": "125.00", "vat_amount": "25.00", "vat_rate": "0.25" }
+            { "type": "physical", "gross_amount": "125.00", "vat_amount": "25.00", "vat_rate": "0.25", "unit_cost": "40.00", "quantity": 2 }
         ],
         "currency": "DKK",
         "invoice_number": "INV-2026-0001"
