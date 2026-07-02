@@ -1,0 +1,43 @@
+{
+  "id": "add-discount-item-type",
+  "title": "discount order line-item type (v2)",
+  "type": "feature",
+  "status": "completed",
+  "created": "2026-07-02T19:40:15Z",
+  "updated": "2026-07-02T19:40:15Z",
+  "completed": "2026-07-02T19:40:15Z",
+  "release": "v1.4.0",
+  "merge_commit": "52ac884",
+  "phases": {
+    "total": 2,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 8,
+    "completed": 8
+  },
+  "notes": "Added discount to v2 item.type enum (shipped/refunded/prepaid) + NO_COGS_ITEM_TYPES. Verified green (PHPUnit 168/168, PHPStan L8, cs-fixer). Feature commits 3a1f311, f130045; merged to main via 52ac884 (re-merged onto origin/main after concurrent PR #3 landed); released v1.4.0.",
+  "impact": {
+    "computed_at": "2026-07-02T19:40:15Z",
+    "first_commit": "3a1f311",
+    "modules_touched": ["schemas", "src", "tests", "docs"],
+    "files_touched": [
+      "schemas/v2/order_shipped.payload.schema.json",
+      "schemas/v2/order_refunded.payload.schema.json",
+      "schemas/v2/payment_prepaid.payload.schema.json",
+      "src/Validator/PayloadValidator.php",
+      "src/Version.php",
+      "tests/Validator/PayloadValidatorTest.php",
+      "tests/fixtures/v2/order_shipped/valid.json",
+      "docs/events/order_shipped.md",
+      "docs/events/order_refunded.md",
+      "docs/events/payment_prepaid.md",
+      "docs/decisions.md",
+      "CHANGELOG.md"
+    ],
+    "downstream_files": 0,
+    "downstream_modules": [],
+    "max_depth": 0,
+    "by_category": {}
+  }
+}

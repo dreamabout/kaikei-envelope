@@ -45,7 +45,7 @@ synced_to_commit: "5f80c542038b3afe2f2908594333072cd8673bf5"
 - Dispatch via **exhaustive `match(EventType)`** in both `Envelope::fromArray` and `PayloadValidator::checkInvariants` — add the arm when adding an event type.
 - Nested objects (`customer`, `items[]`) are typed `array<string,mixed>` in DTOs; structural typing comes from the schema, not the DTO.
 - Cross-field rules the schema can't express live in `PayloadValidator` Tier 3; keep error `code` + `field` at Kaikei parity.
-- No-cost-of-goods item line types (`shipping`, `fee`, `giftwrapping`) must not carry `unit_cost` (enforced by `noCogsItemErrors()` on all item-carrying events). `order.refunded` runs only `refundErrors()` in `checkInvariants()` — a new per-item rule must be wired in via its own helper, not folded into `itemLineErrors()`.
+- No-cost-of-goods item line types (`shipping`, `fee`, `giftwrapping`, `discount`) must not carry `unit_cost` (enforced by `noCogsItemErrors()` on all item-carrying events). `discount` is a negative-amount adjustment line used notably on credit notes. `order.refunded` runs only `refundErrors()` in `checkInvariants()` — a new per-item rule must be wired in via its own helper, not folded into `itemLineErrors()`.
 
 ## Learned Anti-Patterns
 

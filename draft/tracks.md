@@ -22,6 +22,13 @@ synced_to_commit: "5f80c542038b3afe2f2908594333072cd8673bf5"
 
 ## Completed
 
+### add-discount-item-type - discount order line-item type (v2)
+- **Status:** [x] Completed — released **v1.4.0**
+- **Created:** 2026-07-02 · **Completed:** 2026-07-02
+- **Phases:** 2/2 · **Tasks:** 8/8
+- **Commits:** 3a1f311, f130045 · **Merge:** 52ac884
+- **Path:** `./tracks/add-discount-item-type/`
+
 ### item-types-shipping-fee-giftwrap - New order line-item types — shipping, fee, giftwrapping (v2)
 - **Status:** [x] Completed — released **v1.3.0**
 - **Created:** 2026-07-02 · **Completed:** 2026-07-02
