@@ -52,7 +52,8 @@
                 "type": { "type": "string", "enum": ["physical", "gift_card", "digital"] },
                 "gross_amount": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
                 "vat_amount": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
-                "vat_rate": { "type": "string", "pattern": "^-?\\d+\\.\\d{2,4}$" }
+                "vat_rate": { "type": "string", "pattern": "^-?\\d+\\.\\d{2,4}$" },
+                "unit_cost": { "type": "string", "pattern": "^\\d+\\.\\d{2}$" }
             }
         }
     }
