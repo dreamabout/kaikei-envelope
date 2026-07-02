@@ -477,12 +477,50 @@ final class PayloadValidatorTest extends TestCase
                 ['type' => 'shipping', 'gross_amount' => '50.00', 'vat_amount' => '10.00', 'vat_rate' => '0.25'],
                 ['type' => 'fee', 'gross_amount' => '20.00', 'vat_amount' => '4.00', 'vat_rate' => '0.25'],
                 ['type' => 'giftwrapping', 'gross_amount' => '15.00', 'vat_amount' => '3.00', 'vat_rate' => '0.25'],
+                ['type' => 'discount', 'gross_amount' => '-30.00', 'vat_amount' => '-6.00', 'vat_rate' => '0.25'],
             ],
         ];
 
         $result = $this->validator->validate($this->envelope(2, 'order.shipped', $data));
 
         self::assertTrue($result->isValid(), $this->dump($result));
+    }
+
+    public function testDiscountLineAcceptedOnCreditNote(): void
+    {
+        // A credit note (order.refunded) with a discount line and no unit_cost.
+        // Refund arithmetic is balanced so the payload is fully valid.
+        $data = [
+            'order_id' => 'O-1',
+            'reason'   => 'customer_request',
+            'items'    => [
+                ['type' => 'discount', 'gross_amount' => '-50.00', 'vat_amount' => '-10.00', 'vat_rate' => '0.25'],
+            ],
+            'refund_payments' => [
+                ['gateway' => 'stripe', 'original_transaction_id' => 'a', 'refund_transaction_id' => 'b', 'amount' => '50.00'],
+            ],
+        ];
+
+        $result = $this->validator->validate($this->envelope(2, 'order.refunded', $data));
+
+        self::assertTrue($result->isValid(), $this->dump($result));
+    }
+
+    public function testDiscountLineWithUnitCostRejected(): void
+    {
+        $data = [
+            'order_id' => 'O-1',
+            'customer' => ['country_code' => 'DK', 'is_b2b' => false],
+            'items'    => [
+                ['type' => 'discount', 'gross_amount' => '-30.00', 'vat_amount' => '-6.00', 'vat_rate' => '0.25', 'unit_cost' => '5.00'],
+            ],
+        ];
+
+        $result = $this->validator->validate($this->envelope(2, 'order.shipped', $data));
+
+        self::assertSame(ValidationResult::HTTP_UNPROCESSABLE, $result->httpStatus);
+        self::assertSame('invariant_violated', $this->firstError($result)->code);
+        self::assertSame('data.items[0].unit_cost', $this->firstError($result)->field);
     }
 
     public function testShippingLineWithUnitCostRejected(): void

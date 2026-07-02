@@ -44,7 +44,7 @@ final class PayloadValidator
      * Item line types that represent charges rather than sold goods, so
      * they carry no cost of goods and must never include a unit_cost.
      */
-    private const NO_COGS_ITEM_TYPES = ['shipping', 'fee', 'giftwrapping'];
+    private const NO_COGS_ITEM_TYPES = ['shipping', 'fee', 'giftwrapping', 'discount'];
 
     private readonly Validator $opis;
     private readonly string $schemaDir;
