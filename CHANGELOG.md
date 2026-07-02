@@ -9,7 +9,25 @@ and this project adheres to [Semantic Versioning][semver].
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.3.0...HEAD
+
+## [1.3.0] - 2026-07-02
+
+### Added
+- **New `items[].type` values — `shipping`, `fee`, `giftwrapping` (v2)** —
+  added to the item `type` enum on `order.shipped`, `order.refunded`, and
+  `payment.prepaid`. Additive and backward-compatible; no `schema_version`
+  bump (mirrors the `order.fee` 1.1.0 precedent). v1 schemas stay frozen.
+
+### Changed
+- These three types are charge lines with **no cost of goods**: the
+  validator now rejects any `shipping`/`fee`/`giftwrapping` item line that
+  carries a `unit_cost` (`invariant_violated` on
+  `data.items[<i>].unit_cost`), across all three item-carrying events via a
+  dedicated `noCogsItemErrors()` Tier-3 invariant.
+  `physical`/`digital`/`gift_card` lines may still carry `unit_cost`.
+
+[1.3.0]: https://github.com/dreamabout/kaikei-envelope/compare/v1.2.0...v1.3.0
 
 ## [1.2.0] - 2026-07-02
 

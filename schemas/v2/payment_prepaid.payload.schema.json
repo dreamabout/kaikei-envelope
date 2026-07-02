@@ -47,7 +47,7 @@
             "type": "object",
             "required": ["type", "gross_amount", "vat_amount", "vat_rate"],
             "properties": {
-                "type": { "type": "string", "enum": ["physical", "gift_card", "digital"] },
+                "type": { "type": "string", "enum": ["physical", "gift_card", "digital", "shipping", "fee", "giftwrapping"] },
                 "gross_amount": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
                 "vat_amount": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
                 "vat_rate": { "type": "string", "pattern": "^-?\\d+\\.\\d{2,4}$" }

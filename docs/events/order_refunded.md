@@ -25,6 +25,10 @@ Schemas:
 - Each `refund_payments[].amount` must be **positive**.
 - `sum(refund_payments[].amount) == -sum(items[].gross_amount)` — the
   refunded money must equal the negated refunded line totals.
+- `items[].type` ∈ `physical | gift_card | digital | shipping | fee |
+  giftwrapping`; `shipping`/`fee`/`giftwrapping` are no-cost-of-goods
+  charge lines and must not include a `unit_cost` (`invariant_violated`
+  on `data.items[<i>].unit_cost`).
 
 ## Example (v2 envelope)
 

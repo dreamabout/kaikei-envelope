@@ -1,0 +1,18 @@
+# Run the test toolchain without a local PHP install.
+#
+#   docker compose run --rm test                    # PHPUnit: unit + schema-lint suites
+#   docker compose run --rm test vendor/bin/phpunit --testsuite=unit
+#   docker compose run --rm test vendor/bin/phpunit --testsuite=schema-lint
+#   docker compose run --rm test vendor/bin/phpstan analyse --memory-limit=1G
+#   docker compose run --rm test vendor/bin/php-cs-fixer fix --dry-run --diff --using-cache=no
+#
+# Image note: byflou/php:php8.1 ships PHP 8.1 + ext-bcmath/hash/json but NO
+# composer, so commands invoke the already-installed vendor/bin/* tools
+# directly. Run `composer install` on the host once to populate vendor/.
+services:
+  test:
+    image: byflou/php:php8.1
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: vendor/bin/phpunit

@@ -1,0 +1,19 @@
+{
+  "project": "kaikei-envelope",
+  "module": "root",
+  "generated_by": "draft:init",
+  "generated_at": "2026-07-02T16:56:25Z",
+  "git": {
+    "branch": "docs-unit-cost-events",
+    "remote": "origin/docs-unit-cost-events",
+    "commit": "5f80c542038b3afe2f2908594333072cd8673bf5",
+    "commit_short": "5f80c54",
+    "commit_date": "2026-07-02 18:46:36 +0200",
+    "commit_message": "docs(events): document optional items[].unit_cost on shipped/refunded",
+    "dirty": true
+  },
+  "synced_to_commit": "5f80c542038b3afe2f2908594333072cd8673bf5",
+  "tier": 1,
+  "tier_label": "micro",
+  "init_mode": "monolith"
+}
