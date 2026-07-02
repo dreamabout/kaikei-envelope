@@ -32,9 +32,9 @@ Same item shape as `order.shipped`, plus the capture-side fields.
 
 - `vat_amount` must not exceed `gross_amount` on non-negative lines.
 - `gift_card` lines must have `vat_amount == "0.00"`.
-- `type` ∈ `physical | gift_card | digital | shipping | fee | giftwrapping`.
-- `shipping`, `fee`, and `giftwrapping` are charge lines with **no cost of
-  goods** and must not include a `unit_cost`.
+- `type` ∈ `physical | gift_card | digital | shipping | fee | giftwrapping | discount`.
+- `shipping`, `fee`, `giftwrapping`, and `discount` are charge/adjustment lines with
+  **no cost of goods** and must not include a `unit_cost`.
 
 ## Example (v2 envelope)
 

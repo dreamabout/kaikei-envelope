@@ -26,9 +26,10 @@ Schemas:
 - `sum(refund_payments[].amount) == -sum(items[].gross_amount)` — the
   refunded money must equal the negated refunded line totals.
 - `items[].type` ∈ `physical | gift_card | digital | shipping | fee |
-  giftwrapping`; `shipping`/`fee`/`giftwrapping` are no-cost-of-goods
-  charge lines and must not include a `unit_cost` (`invariant_violated`
-  on `data.items[<i>].unit_cost`).
+  giftwrapping | discount`; `shipping`/`fee`/`giftwrapping`/`discount` are
+  no-cost-of-goods charge/adjustment lines and must not include a
+  `unit_cost` (`invariant_violated` on `data.items[<i>].unit_cost`).
+  `discount` is a reduction line (negative amounts) — commonly used on credit notes.
 
 ## Example (v2 envelope)
 

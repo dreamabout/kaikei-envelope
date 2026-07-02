@@ -202,3 +202,9 @@ existing `gift_card`/`vat` rules' per-event scope.
 `schema_version` bump, mirroring the `order.fee` (1.1.0) precedent. The v1
 schemas stay frozen as the faithful mirror of Kaikei's deployed contract,
 so the new types are v2-only.
+
+**Update (1.4.0):** `discount` joins the same no-COGS set on all three v2
+item-carrying events. It is a reduction/adjustment line (negative
+`gross_amount`/`vat_amount`) used notably on credit notes (`order.refunded`);
+same `unit_cost` prohibition, and VAT-bearing (proportional VAT — no zero-VAT
+rule). Additive MINOR (`1.3.0` → `1.4.0`), v2-only.

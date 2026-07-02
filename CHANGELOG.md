@@ -9,7 +9,24 @@ and this project adheres to [Semantic Versioning][semver].
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.4.0...HEAD
+
+## [1.4.0] - 2026-07-02
+
+### Added
+- **New `items[].type` value — `discount` (v2)** — added to the item `type`
+  enum on `order.shipped`, `order.refunded`, and `payment.prepaid`. A
+  reduction/adjustment line (negative `gross_amount`/`vat_amount`), used
+  notably on credit notes (`order.refunded`). Additive; no `schema_version`
+  bump; v1 stays frozen.
+
+### Changed
+- `discount` joins the no-cost-of-goods set: the validator rejects a
+  `discount` line carrying `unit_cost` (`invariant_violated` on
+  `data.items[<i>].unit_cost`), alongside `shipping`/`fee`/`giftwrapping`.
+  `discount` is VAT-bearing (proportional VAT; no zero-VAT rule).
+
+[1.4.0]: https://github.com/dreamabout/kaikei-envelope/compare/v1.3.0...v1.4.0
 
 ## [1.3.0] - 2026-07-02
 
