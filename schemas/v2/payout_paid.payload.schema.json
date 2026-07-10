@@ -16,6 +16,7 @@
         "gross_amount": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
         "fee_amount": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
         "net_amount": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
+        "payout_fee_amount": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
         "paid_at": { "type": "string", "format": "date-time" },
         "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
         "fx_rate": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" }

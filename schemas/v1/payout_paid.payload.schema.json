@@ -16,6 +16,7 @@
         "gross_amount": { "$ref": "#/$defs/decimal" },
         "fee_amount": { "$ref": "#/$defs/decimal" },
         "net_amount": { "$ref": "#/$defs/decimal" },
+        "payout_fee_amount": { "$ref": "#/$defs/decimal" },
         "paid_at": { "type": "string", "format": "date-time" },
         "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
         "fx_rate_to_dkk": { "type": "string", "pattern": "^\\d+(\\.\\d+)?$" }
