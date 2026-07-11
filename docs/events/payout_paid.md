@@ -16,17 +16,18 @@ Schemas:
 | `transaction_ids` | array | yes | Non-empty list of strings settled by this payout. |
 | `gross_amount` | string | yes | Decimal. |
 | `fee_amount` | string | yes | Decimal. |
-| `net_amount` | string | yes | Decimal. Gateway balance transferred out (`gross_amount - fee_amount`). |
-| `payout_fee_amount` | string | no | Decimal ≥ 0. Fee to **handle the payout/transfer itself** (fixed transfer/withdrawal charge), distinct from the per-transaction `fee_amount`. Deducted from `net_amount` on the way to the bank, so the bank receives `net_amount - payout_fee_amount`. Must not exceed `net_amount`. |
+| `net_amount` | string | yes | Decimal. The amount that actually reaches the bank, after BOTH `fee_amount` and `payout_fee_amount`. |
+| `payout_fee_amount` | string | no | Decimal ≥ 0. Fee to **get the payout itself** (the transfer/withdrawal charge), distinct from the per-transaction `fee_amount`. A term in the balance below; omitted when `0.00`. |
 | `paid_at` | string | yes | RFC 3339 timestamp. |
 | `currency` | string | no | ISO 4217. |
 | `fx_rate` (v2) / `fx_rate_to_dkk` (v1) | string | no | Positive decimal rate to DKK. |
 
 ## Cross-field invariants
 
-- `gross_amount == fee_amount + net_amount` (scale 2). `payout_fee_amount` is a
-  deduction *from* `net_amount` toward the bank, **not** a term in this identity.
-- `0 <= payout_fee_amount <= net_amount` (when present).
+- `gross_amount == fee_amount + payout_fee_amount + net_amount` (scale 2). An
+  absent `payout_fee_amount` is treated as `0.00`, so a payload without it reduces
+  to the original `gross == fee + net` identity (backward compatible).
+- `payout_fee_amount >= 0` (when present).
 
 ## Example (v2 envelope)
 

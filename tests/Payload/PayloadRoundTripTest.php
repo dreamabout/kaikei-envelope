@@ -166,6 +166,39 @@ final class PayloadRoundTripTest extends TestCase
         self::assertSame($in, $out);
     }
 
+    public function testPayoutPaidRoundTripWithPayoutFee(): void
+    {
+        $in = [
+            'payout_id'         => 'po_xyz789',
+            'gateway'           => 'rapyd',
+            'transaction_ids'   => ['tx_001'],
+            'gross_amount'      => '1000.00',
+            'fee_amount'        => '15.00',
+            'net_amount'        => '975.00',
+            'paid_at'           => '2026-06-14T08:00:00Z',
+            'payout_fee_amount' => '10.00',
+        ];
+
+        $out = PayoutPaidPayload::fromArray($in)->toArray();
+        self::assertSame($in, $out, 'payout_fee_amount round-trips');
+    }
+
+    public function testPayoutPaidOmitsPayoutFeeWhenAbsent(): void
+    {
+        $in = [
+            'payout_id'       => 'po_xyz789',
+            'gateway'         => 'rapyd',
+            'transaction_ids' => ['tx_001'],
+            'gross_amount'    => '1000.00',
+            'fee_amount'      => '15.00',
+            'net_amount'      => '985.00',
+            'paid_at'         => '2026-06-14T08:00:00Z',
+        ];
+
+        $out = PayoutPaidPayload::fromArray($in)->toArray();
+        self::assertArrayNotHasKey('payout_fee_amount', $out, 'omitted when null');
+    }
+
     public function testPaymentPrepaidRoundTrip(): void
     {
         $in = [

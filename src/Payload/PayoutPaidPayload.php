@@ -28,8 +28,9 @@ use Dreamabout\KaikeiEnvelope\PayloadInterface;
  *   - fx_rate           : decimal string
  *   - payout_fee_amount : decimal string -- fee to handle the payout/transfer
  *     itself (distinct from `fee_amount`, the per-transaction processing fee).
- *     Non-negative and must not exceed `net_amount`; the bank receives
- *     `net_amount - payout_fee_amount`.
+ *     Non-negative and a term in the balance
+ *     `gross_amount == fee_amount + payout_fee_amount + net_amount`;
+ *     `net_amount` is the amount that actually reaches the bank (after both fees).
  *
  * Arithmetic invariant (validated by `PayloadValidator`, NOT enforced
  * by this DTO's construction): `gross_amount == fee_amount + net_amount`

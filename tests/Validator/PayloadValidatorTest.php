@@ -272,6 +272,69 @@ final class PayloadValidatorTest extends TestCase
 
     public function testPayoutFeeAmountAccepted(): void
     {
+        // Extend-the-balance model: gross == fee + payout_fee + net.
+        // 15 + 10 + 975 == 1000.
+        $data = [
+            'payout_id'         => 'po_pf',
+            'gateway'           => 'stripe',
+            'transaction_ids'   => ['tx_1'],
+            'gross_amount'      => '1000.00',
+            'fee_amount'        => '15.00',
+            'net_amount'        => '975.00',
+            'payout_fee_amount' => '10.00',
+            'paid_at'           => self::VALID_OCCURRED_AT,
+        ];
+
+        $result = $this->validator->validate($this->envelope(2, 'payout.paid', $data));
+
+        self::assertTrue($result->isValid(), $this->dump($result));
+        self::assertSame(ValidationResult::HTTP_OK, $result->httpStatus);
+    }
+
+    public function testPayoutWithoutPayoutFeeStaysValid(): void
+    {
+        // Backward compat: absent payout_fee_amount behaves as 0.00, so the
+        // old identity gross == fee + net still holds. 15 + 985 == 1000.
+        $data = [
+            'payout_id'       => 'po_pf',
+            'gateway'         => 'stripe',
+            'transaction_ids' => ['tx_1'],
+            'gross_amount'    => '1000.00',
+            'fee_amount'      => '15.00',
+            'net_amount'      => '985.00',
+            'paid_at'         => self::VALID_OCCURRED_AT,
+        ];
+
+        $result = $this->validator->validate($this->envelope(2, 'payout.paid', $data));
+
+        self::assertTrue($result->isValid(), $this->dump($result));
+    }
+
+    public function testPayoutFeeNegativeRejected(): void
+    {
+        // Balances the identity (15 + (-1) + 986 == 1000) so the non-negative
+        // guard is what rejects, not the arithmetic check.
+        $data = [
+            'payout_id'         => 'po_pf',
+            'gateway'           => 'stripe',
+            'transaction_ids'   => ['tx_1'],
+            'gross_amount'      => '1000.00',
+            'fee_amount'        => '15.00',
+            'net_amount'        => '986.00',
+            'payout_fee_amount' => '-1.00',
+            'paid_at'           => self::VALID_OCCURRED_AT,
+        ];
+
+        $result = $this->validator->validate($this->envelope(2, 'payout.paid', $data));
+
+        self::assertSame(ValidationResult::HTTP_UNPROCESSABLE, $result->httpStatus);
+        self::assertSame('invariant_violated', $this->firstError($result)->code);
+        self::assertSame('data.payout_fee_amount', $this->firstError($result)->field);
+    }
+
+    public function testPayoutFeeArithmeticViolation(): void
+    {
+        // gross != fee + payout_fee + net  (15 + 10 + 985 == 1010 != 1000).
         $data = [
             'payout_id'         => 'po_pf',
             'gateway'           => 'stripe',
@@ -285,48 +348,9 @@ final class PayloadValidatorTest extends TestCase
 
         $result = $this->validator->validate($this->envelope(2, 'payout.paid', $data));
 
-        self::assertTrue($result->isValid(), $this->dump($result));
-        self::assertSame(ValidationResult::HTTP_OK, $result->httpStatus);
-    }
-
-    public function testPayoutFeeNegativeRejected(): void
-    {
-        $data = [
-            'payout_id'         => 'po_pf',
-            'gateway'           => 'stripe',
-            'transaction_ids'   => ['tx_1'],
-            'gross_amount'      => '1000.00',
-            'fee_amount'        => '15.00',
-            'net_amount'        => '985.00',
-            'payout_fee_amount' => '-1.00',
-            'paid_at'           => self::VALID_OCCURRED_AT,
-        ];
-
-        $result = $this->validator->validate($this->envelope(2, 'payout.paid', $data));
-
         self::assertSame(ValidationResult::HTTP_UNPROCESSABLE, $result->httpStatus);
         self::assertSame('invariant_violated', $this->firstError($result)->code);
-        self::assertSame('data.payout_fee_amount', $this->firstError($result)->field);
-    }
-
-    public function testPayoutFeeExceedingNetRejected(): void
-    {
-        $data = [
-            'payout_id'         => 'po_pf',
-            'gateway'           => 'stripe',
-            'transaction_ids'   => ['tx_1'],
-            'gross_amount'      => '1000.00',
-            'fee_amount'        => '15.00',
-            'net_amount'        => '985.00',
-            'payout_fee_amount' => '990.00',
-            'paid_at'           => self::VALID_OCCURRED_AT,
-        ];
-
-        $result = $this->validator->validate($this->envelope(2, 'payout.paid', $data));
-
-        self::assertSame(ValidationResult::HTTP_UNPROCESSABLE, $result->httpStatus);
-        self::assertSame('invariant_violated', $this->firstError($result)->code);
-        self::assertSame('data.payout_fee_amount', $this->firstError($result)->field);
+        self::assertSame('data.gross_amount', $this->firstError($result)->field);
     }
 
     public function testGiftCardLineMustHaveZeroVat(): void

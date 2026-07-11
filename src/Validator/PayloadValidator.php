@@ -384,7 +384,13 @@ final class PayloadValidator
     }
 
     /**
-     * Payout arithmetic: gross_amount == fee_amount + net_amount.
+     * Payout arithmetic: gross_amount == fee_amount + payout_fee_amount + net_amount.
+     *
+     * `payout_fee_amount` (optional -- the payout/withdrawal fee for the transfer
+     * itself, distinct from the per-transaction `fee_amount`) is a TERM in the
+     * balance: net_amount is what actually reaches the bank after BOTH fees.
+     * Absent => treated as 0.00, so a payload without it reduces to the original
+     * `gross == fee + net` identity (backward compatible).
      *
      * @param array<string, mixed> $data
      *
@@ -397,23 +403,16 @@ final class PayloadValidator
         $gross = (string) ($data['gross_amount'] ?? '0');
         $fee = (string) ($data['fee_amount'] ?? '0');
         $net = (string) ($data['net_amount'] ?? '0');
+        $payoutFee = (string) ($data['payout_fee_amount'] ?? '0.00');
 
-        $sum = \bcadd($fee, $net, 2);
-        if (0 !== \bccomp($gross, $sum, 2)) {
-            return [new FieldError('data.gross_amount', 'invariant_violated', "Arithmetic violation: gross_amount ({$gross}) != fee_amount + net_amount ({$sum}).")];
+        // A payout fee is a charge, never a credit.
+        if (\bccomp($payoutFee, '0.00', 2) < 0) {
+            return [new FieldError('data.payout_fee_amount', 'invariant_violated', "payout_fee_amount must not be negative (got {$payoutFee}).")];
         }
 
-        // Optional payout-handling (transfer) fee: distinct from the per-transaction
-        // `fee_amount`. It is deducted from `net_amount` on the way to the bank, so it
-        // must be non-negative and cannot exceed `net_amount`. Absent → nothing to check.
-        if (\is_string($data['payout_fee_amount'] ?? null)) {
-            $payoutFee = $data['payout_fee_amount'];
-            if (\bccomp($payoutFee, '0.00', 2) < 0) {
-                return [new FieldError('data.payout_fee_amount', 'invariant_violated', "payout_fee_amount must not be negative (got {$payoutFee}).")];
-            }
-            if (\bccomp($payoutFee, $net, 2) > 0) {
-                return [new FieldError('data.payout_fee_amount', 'invariant_violated', "payout_fee_amount ({$payoutFee}) must not exceed net_amount ({$net}).")];
-            }
+        $sum = \bcadd(\bcadd($fee, $payoutFee, 2), $net, 2);
+        if (0 !== \bccomp($gross, $sum, 2)) {
+            return [new FieldError('data.gross_amount', 'invariant_violated', "Arithmetic violation: gross_amount ({$gross}) != fee_amount + payout_fee_amount + net_amount ({$sum}).")];
         }
 
         return [];
