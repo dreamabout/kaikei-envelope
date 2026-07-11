@@ -9,7 +9,22 @@ and this project adheres to [Semantic Versioning][semver].
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.5.0...HEAD
+
+## [1.5.0] - 2026-07-10
+
+### Added
+- **New optional `payout_fee_amount` on `payout.paid` (v1 + v2)** — a fee charged
+  to **handle the payout/transfer itself** (a fixed transfer/withdrawal charge),
+  distinct from the per-transaction `fee_amount` (processing fees). Decimal string,
+  optional (default absent → no-op). The validator requires it to be non-negative
+  and not exceed `net_amount` (`invariant_violated` on `data.payout_fee_amount`).
+  The `gross_amount == fee_amount + net_amount` identity is unchanged —
+  `payout_fee_amount` is a deduction *from* `net_amount` toward the bank
+  (bank receipt = `net_amount - payout_fee_amount`), not a term in that identity.
+  Added to both schemas + `PayoutPaidPayload`. Additive; no `schema_version` bump.
+
+[1.5.0]: https://github.com/dreamabout/kaikei-envelope/compare/v1.4.0...v1.5.0
 
 ## [1.4.0] - 2026-07-02
 

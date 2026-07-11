@@ -24,8 +24,12 @@ use Dreamabout\KaikeiEnvelope\PayloadInterface;
  *   - paid_at         : RFC 3339 timestamp string -- when the payout cleared
  *
  * Optional:
- *   - currency : 3-letter ISO code
- *   - fx_rate  : decimal string
+ *   - currency          : 3-letter ISO code
+ *   - fx_rate           : decimal string
+ *   - payout_fee_amount : decimal string -- fee to handle the payout/transfer
+ *     itself (distinct from `fee_amount`, the per-transaction processing fee).
+ *     Non-negative and must not exceed `net_amount`; the bank receives
+ *     `net_amount - payout_fee_amount`.
  *
  * Arithmetic invariant (validated by `PayloadValidator`, NOT enforced
  * by this DTO's construction): `gross_amount == fee_amount + net_amount`
@@ -47,6 +51,7 @@ final class PayoutPaidPayload implements PayloadInterface
         public readonly string $paidAt,
         public readonly ?string $currency = null,
         public readonly ?string $fxRate = null,
+        public readonly ?string $payoutFeeAmount = null,
     ) {
     }
 
@@ -71,6 +76,7 @@ final class PayoutPaidPayload implements PayloadInterface
             paidAt: (string)($row['paid_at'] ?? ''),
             currency: isset($row['currency']) ? (string)$row['currency'] : null,
             fxRate: isset($row['fx_rate']) ? (string)$row['fx_rate'] : null,
+            payoutFeeAmount: isset($row['payout_fee_amount']) ? (string)$row['payout_fee_amount'] : null,
         );
     }
 
@@ -90,6 +96,9 @@ final class PayoutPaidPayload implements PayloadInterface
         }
         if (null !== $this->fxRate) {
             $out['fx_rate'] = $this->fxRate;
+        }
+        if (null !== $this->payoutFeeAmount) {
+            $out['payout_fee_amount'] = $this->payoutFeeAmount;
         }
 
         return $out;

@@ -403,6 +403,19 @@ final class PayloadValidator
             return [new FieldError('data.gross_amount', 'invariant_violated', "Arithmetic violation: gross_amount ({$gross}) != fee_amount + net_amount ({$sum}).")];
         }
 
+        // Optional payout-handling (transfer) fee: distinct from the per-transaction
+        // `fee_amount`. It is deducted from `net_amount` on the way to the bank, so it
+        // must be non-negative and cannot exceed `net_amount`. Absent → nothing to check.
+        if (\is_string($data['payout_fee_amount'] ?? null)) {
+            $payoutFee = $data['payout_fee_amount'];
+            if (\bccomp($payoutFee, '0.00', 2) < 0) {
+                return [new FieldError('data.payout_fee_amount', 'invariant_violated', "payout_fee_amount must not be negative (got {$payoutFee}).")];
+            }
+            if (\bccomp($payoutFee, $net, 2) > 0) {
+                return [new FieldError('data.payout_fee_amount', 'invariant_violated', "payout_fee_amount ({$payoutFee}) must not exceed net_amount ({$net}).")];
+            }
+        }
+
         return [];
     }
 
