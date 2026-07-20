@@ -9,6 +9,7 @@ use Dreamabout\KaikeiEnvelope\Payload\OrderFeePayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderRefundedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderShippedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\PaymentPrepaidPayload;
+use Dreamabout\KaikeiEnvelope\Payload\PayoutDisbursedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\PayoutPaidPayload;
 
 /**
@@ -79,6 +80,7 @@ final class Envelope
             EventType::PayoutPaid     => PayoutPaidPayload::fromArray($rawData),
             EventType::PaymentPrepaid => PaymentPrepaidPayload::fromArray($rawData),
             EventType::OrderFee       => OrderFeePayload::fromArray($rawData),
+            EventType::PayoutDisbursed => PayoutDisbursedPayload::fromArray($rawData),
         };
 
         return new self(
