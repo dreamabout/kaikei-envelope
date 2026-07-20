@@ -9,7 +9,21 @@ and this project adheres to [Semantic Versioning][semver].
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.6.0...HEAD
+
+## [1.6.0] - 2026-07-20
+
+### Added
+- **New `payout.disbursed` event (v1 + v2)** — money leaving the gateway wallet
+  for the merchant's own bank account, one per bank deposit (Rapyd Settlement
+  Reference ID). Additive: new `EventType::PayoutDisbursed`, `PayoutDisbursedPayload`
+  DTO, and `payout_disbursed.payload.schema.json`. Required `disbursement_id`,
+  `gateway`, `gross_amount`, `disbursed_at`; optional `bank`, `settlement_ids`,
+  `currency`, `fx_rate`. `gross_amount` is net-of-fees and may be negative; no
+  cross-field arithmetic invariant (single amount). The receiver books it
+  debit bank(gateway) / credit gateway_clearing(gateway). `SCHEMA_VERSION` unchanged (2).
+
+[1.6.0]: https://github.com/dreamabout/kaikei-envelope/compare/v1.5.0...v1.6.0
 
 ## [1.5.0] - 2026-07-10
 

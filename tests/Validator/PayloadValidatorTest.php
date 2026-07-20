@@ -27,6 +27,7 @@ final class PayloadValidatorTest extends TestCase
         'payout_paid'     => 'payout.paid',
         'payment_prepaid' => 'payment.prepaid',
         'order_fee'       => 'order.fee',
+        'payout_disbursed' => 'payout.disbursed',
     ];
 
     private PayloadValidator $validator;

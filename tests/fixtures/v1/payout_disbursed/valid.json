@@ -1,0 +1,9 @@
+{
+    "disbursement_id": "aec543540d13",
+    "gateway": "costplus",
+    "bank": "Sparekassen Thy",
+    "settlement_ids": ["421750C4", "DD1B1E77", "B442D6E6"],
+    "gross_amount": "2033.71",
+    "currency": "EUR",
+    "disbursed_at": "2026-07-17T00:00:00Z"
+}

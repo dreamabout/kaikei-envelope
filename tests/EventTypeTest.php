@@ -15,9 +15,9 @@ use PHPUnit\Framework\TestCase;
  */
 final class EventTypeTest extends TestCase
 {
-    public function testSixCasesExist(): void
+    public function testSevenCasesExist(): void
     {
-        self::assertCount(6, EventType::cases());
+        self::assertCount(7, EventType::cases());
     }
 
     /**
@@ -36,6 +36,12 @@ final class EventTypeTest extends TestCase
         self::assertNull(EventType::tryFromString(''));
     }
 
+    public function testPayoutDisbursedCaseMapsToWireString(): void
+    {
+        self::assertSame('payout.disbursed', EventType::PayoutDisbursed->value);
+        self::assertSame(EventType::PayoutDisbursed, EventType::tryFromString('payout.disbursed'));
+    }
+
     /**
      * @return iterable<string,array{0:string,1:EventType}>
      */
@@ -47,5 +53,6 @@ final class EventTypeTest extends TestCase
         yield 'payout.paid'     => ['payout.paid',     EventType::PayoutPaid];
         yield 'payment.prepaid' => ['payment.prepaid', EventType::PaymentPrepaid];
         yield 'order.fee'       => ['order.fee',       EventType::OrderFee];
+        yield 'payout.disbursed' => ['payout.disbursed', EventType::PayoutDisbursed];
     }
 }

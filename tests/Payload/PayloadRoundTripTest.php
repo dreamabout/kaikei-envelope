@@ -9,6 +9,7 @@ use Dreamabout\KaikeiEnvelope\Payload\OrderFeePayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderRefundedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderShippedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\PaymentPrepaidPayload;
+use Dreamabout\KaikeiEnvelope\Payload\PayoutDisbursedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\PayoutPaidPayload;
 use PHPUnit\Framework\TestCase;
 
@@ -22,6 +23,24 @@ use PHPUnit\Framework\TestCase;
  */
 final class PayloadRoundTripTest extends TestCase
 {
+    public function testPayoutDisbursedRoundTrip(): void
+    {
+        $payload = new PayoutDisbursedPayload(
+            disbursementId: 'aec543540d13',
+            gateway: 'costplus',
+            grossAmount: '2033.71',
+            disbursedAt: '2026-07-17T00:00:00Z',
+            bank: 'Sparekassen Thy',
+            settlementIds: ['421750C4', 'DD1B1E77', 'B442D6E6'],
+            currency: 'EUR',
+        );
+        $array = $payload->toArray();
+        self::assertSame('aec543540d13', $array['disbursement_id']);
+        self::assertSame('2033.71', $array['gross_amount']);
+        self::assertArrayNotHasKey('fx_rate', $array);
+        self::assertEquals($payload, PayoutDisbursedPayload::fromArray($array));
+    }
+
     public function testOrderShippedRoundTripWithAllFields(): void
     {
         $in = [
