@@ -21,6 +21,10 @@ namespace Dreamabout\KaikeiEnvelope;
  * `payout.disbursed` (added 1.6.0) is additive: money leaving the gateway
  * wallet for our own bank account, one per bank deposit (Settlement
  * Reference ID). No `schema_version` bump.
+ *
+ * `account.fee` (added 1.7.0) is additive: a standing shop-level provider
+ * account fee (e.g. Rapyd's daily account fee), not tied to any order. No
+ * `schema_version` bump.
  */
 enum EventType: string
 {
@@ -31,6 +35,7 @@ enum EventType: string
     case PaymentPrepaid = 'payment.prepaid';
     case OrderFee       = 'order.fee';
     case PayoutDisbursed = 'payout.disbursed';
+    case AccountFee      = 'account.fee';
 
     /**
      * Tolerant lookup -- returns null on unknown input rather than

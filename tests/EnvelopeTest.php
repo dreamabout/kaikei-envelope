@@ -6,6 +6,7 @@ namespace Dreamabout\KaikeiEnvelope\Tests;
 
 use Dreamabout\KaikeiEnvelope\Envelope;
 use Dreamabout\KaikeiEnvelope\EventType;
+use Dreamabout\KaikeiEnvelope\Payload\AccountFeePayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderCapturedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderRefundedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderShippedPayload;
@@ -68,6 +69,15 @@ final class EnvelopeTest extends TestCase
             'gross_amount' => '2033.71', 'disbursed_at' => '2026-07-17T00:00:00Z',
         ]);
         self::assertInstanceOf(PayoutDisbursedPayload::class, $env->data);
+    }
+
+    public function testAccountFeeDispatchesToCorrectPayload(): void
+    {
+        $env = $this->build(EventType::AccountFee, [
+            'fee_id' => 'BC2042895E', 'gateway' => 'costplus',
+            'amount' => '0.25', 'incurred_at' => '2026-07-11T00:00:00Z',
+        ]);
+        self::assertInstanceOf(AccountFeePayload::class, $env->data);
     }
 
     public function testPaymentPrepaidDispatchesToCorrectPayload(): void

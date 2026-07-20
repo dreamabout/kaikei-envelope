@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Dreamabout\KaikeiEnvelope\Tests\Payload;
 
+use Dreamabout\KaikeiEnvelope\Payload\AccountFeePayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderCapturedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderFeePayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderRefundedPayload;
@@ -23,6 +24,22 @@ use PHPUnit\Framework\TestCase;
  */
 final class PayloadRoundTripTest extends TestCase
 {
+    public function testAccountFeeRoundTrip(): void
+    {
+        $payload = new AccountFeePayload(
+            feeId: 'BC2042895E0FA7B8243109A9B0EB42A4',
+            gateway: 'costplus',
+            amount: '0.25',
+            incurredAt: '2026-07-11T00:00:00Z',
+            currency: 'EUR',
+        );
+        $array = $payload->toArray();
+        self::assertSame('BC2042895E0FA7B8243109A9B0EB42A4', $array['fee_id']);
+        self::assertSame('0.25', $array['amount']);
+        self::assertArrayNotHasKey('fx_rate', $array);
+        self::assertEquals($payload, AccountFeePayload::fromArray($array));
+    }
+
     public function testPayoutDisbursedRoundTrip(): void
     {
         $payload = new PayoutDisbursedPayload(

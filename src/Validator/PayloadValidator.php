@@ -254,6 +254,9 @@ final class PayloadValidator
             EventType::OrderRefunded => [...$this->refundErrors($data), ...$this->noCogsItemErrors($data)],
             EventType::PayoutPaid => $this->payoutErrors($data),
             EventType::OrderFee => $this->feeErrors($data),
+            // account.fee reuses order.fee's positive-amount invariant (the
+            // shop-level account fee must be a positive magnitude).
+            EventType::AccountFee => $this->feeErrors($data),
             EventType::OrderCaptured => [],
             // payout.disbursed carries a single gross amount -- no
             // cross-field arithmetic invariant the schema can't already
