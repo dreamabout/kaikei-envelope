@@ -9,7 +9,21 @@ and this project adheres to [Semantic Versioning][semver].
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.6.0...HEAD
+[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.7.0...HEAD
+
+## [1.7.0] - 2026-07-20
+
+### Added
+- **New `account.fee` event (v1 + v2)** — a standing shop-level provider account
+  fee (e.g. Rapyd's daily account fee), not tied to any order. Additive: new
+  `EventType::AccountFee`, `AccountFeePayload` DTO, and
+  `account_fee.payload.schema.json`. Required `fee_id`, `gateway`, `amount`,
+  `incurred_at`; optional `currency`, `fx_rate`. No `fee_type` (the event is the
+  discriminator). `amount > 0` enforced by `PayloadValidator` (reuses the
+  order.fee invariant). The receiver books it debit gateway_fee(gateway,
+  'account') / credit gateway_clearing(gateway). `SCHEMA_VERSION` unchanged (2).
+
+[1.7.0]: https://github.com/dreamabout/kaikei-envelope/compare/v1.6.0...v1.7.0
 
 ## [1.6.0] - 2026-07-20
 

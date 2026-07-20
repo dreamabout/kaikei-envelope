@@ -28,6 +28,7 @@ final class PayloadValidatorTest extends TestCase
         'payment_prepaid' => 'payment.prepaid',
         'order_fee'       => 'order.fee',
         'payout_disbursed' => 'payout.disbursed',
+        'account_fee'      => 'account.fee',
     ];
 
     private PayloadValidator $validator;
@@ -231,6 +232,22 @@ final class PayloadValidatorTest extends TestCase
         ];
 
         $result = $this->validator->validate($this->envelope(2, 'order.fee', $data));
+
+        self::assertSame(ValidationResult::HTTP_UNPROCESSABLE, $result->httpStatus);
+        self::assertSame('invariant_violated', $this->firstError($result)->code);
+        self::assertSame('data.amount', $this->firstError($result)->field);
+    }
+
+    public function testAccountFeeAmountMustBePositive(): void
+    {
+        $data = [
+            'fee_id'      => 'BC2042895E0FA7B8243109A9B0EB42A4',
+            'gateway'     => 'costplus',
+            'amount'      => '0.00',
+            'incurred_at' => '2026-07-11T00:00:00Z',
+        ];
+
+        $result = $this->validator->validate($this->envelope(2, 'account.fee', $data));
 
         self::assertSame(ValidationResult::HTTP_UNPROCESSABLE, $result->httpStatus);
         self::assertSame('invariant_violated', $this->firstError($result)->code);
