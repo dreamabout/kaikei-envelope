@@ -255,6 +255,10 @@ final class PayloadValidator
             EventType::PayoutPaid => $this->payoutErrors($data),
             EventType::OrderFee => $this->feeErrors($data),
             EventType::OrderCaptured => [],
+            // payout.disbursed carries a single gross amount -- no
+            // cross-field arithmetic invariant the schema can't already
+            // express (amount pattern, required keys). Schema-tier only.
+            EventType::PayoutDisbursed => [],
         };
     }
 
