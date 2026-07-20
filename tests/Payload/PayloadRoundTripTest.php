@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Dreamabout\KaikeiEnvelope\Tests\Payload;
 
+use Dreamabout\KaikeiEnvelope\Payload\AccountFeePayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderCapturedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderFeePayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderRefundedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderShippedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\PaymentPrepaidPayload;
-use Dreamabout\KaikeiEnvelope\Payload\AccountFeePayload;
 use Dreamabout\KaikeiEnvelope\Payload\PayoutDisbursedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\PayoutPaidPayload;
 use PHPUnit\Framework\TestCase;
