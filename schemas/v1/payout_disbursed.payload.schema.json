@@ -1,0 +1,22 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://github.com/dreamabout/kaikei-envelope/schemas/v1/payout_disbursed.payload.schema.json",
+    "title": "payout.disbursed payload",
+    "description": "Money leaving the gateway wallet for the merchant's own bank account, one per bank deposit (Settlement Reference ID). The receiver books debit bank(gateway) / credit gateway_clearing(gateway) for gross_amount. gross_amount is net-of-fees (fees are recognised separately via payout.paid / account.fee) and may be negative for a net-negative deposit.",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["disbursement_id", "gateway", "gross_amount", "disbursed_at"],
+    "properties": {
+        "disbursement_id": { "type": "string", "minLength": 1 },
+        "gateway": { "type": "string", "minLength": 1 },
+        "bank": { "type": "string", "minLength": 1 },
+        "settlement_ids": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+        },
+        "gross_amount": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
+        "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
+        "fx_rate": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
+        "disbursed_at": { "type": "string", "format": "date-time" }
+    }
+}
