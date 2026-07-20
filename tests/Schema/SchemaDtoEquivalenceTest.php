@@ -9,7 +9,9 @@ use Dreamabout\KaikeiEnvelope\Payload\OrderCapturedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderFeePayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderRefundedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderShippedPayload;
+use Dreamabout\KaikeiEnvelope\Payload\AccountFeePayload;
 use Dreamabout\KaikeiEnvelope\Payload\PaymentPrepaidPayload;
+use Dreamabout\KaikeiEnvelope\Payload\PayoutDisbursedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\PayoutPaidPayload;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
@@ -117,6 +119,8 @@ final class SchemaDtoEquivalenceTest extends TestCase
         yield 'payout.paid'     => [self::SCHEMA_DIR . '/payout_paid.payload.schema.json', PayoutPaidPayload::class];
         yield 'payment.prepaid' => [self::SCHEMA_DIR . '/payment_prepaid.payload.schema.json', PaymentPrepaidPayload::class];
         yield 'order.fee'       => [self::SCHEMA_DIR . '/order_fee.payload.schema.json', OrderFeePayload::class];
+        yield 'payout.disbursed' => [self::SCHEMA_DIR . '/payout_disbursed.payload.schema.json', PayoutDisbursedPayload::class];
+        yield 'account.fee'     => [self::SCHEMA_DIR . '/account_fee.payload.schema.json', AccountFeePayload::class];
     }
 
     /**
