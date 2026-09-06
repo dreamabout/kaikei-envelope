@@ -18,6 +18,14 @@ use Dreamabout\KaikeiEnvelope\PayloadInterface;
  *   - refund_payments : non-empty array of {gateway, original_transaction_id, refund_transaction_id, amount}
  *
  * Optional:
+ *   - customer            : object {country_code: string, is_b2b: bool, ...} -- the SAME
+ *                           shape order.shipped carries. Optional on a refund by design:
+ *                           producers that predate it keep validating, and the receiver
+ *                           already falls back to the customer on the reversed order's own
+ *                           order.shipped / payment.prepaid. Sending it is preferred --
+ *                           the fallback cannot resolve a sale that predates ingestion, and
+ *                           a refund with no resolvable country was defaulting to DK, which
+ *                           booked foreign refunds to Danish momskoder.
  *   - currency            : 3-letter ISO code
  *   - fx_rate             : decimal string
  *   - prepayment_event_id : ULID linking to the original prepayment envelope when refunding a prepaid order
@@ -34,6 +42,7 @@ final class OrderRefundedPayload implements PayloadInterface
     /**
      * @param list<array<string,mixed>> $items
      * @param list<array<string,mixed>> $refundPayments
+     * @param array<string,mixed>|null  $customer
      */
     public function __construct(
         public readonly string $orderId,
@@ -44,6 +53,10 @@ final class OrderRefundedPayload implements PayloadInterface
         public readonly ?string $fxRate = null,
         public readonly ?string $prepaymentEventId = null,
         public readonly ?string $creditNoteNumber = null,
+        // Appended, NOT inserted next to the other optionals: a new parameter in
+        // the middle of the signature silently breaks every positional caller,
+        // which is not what a minor release is allowed to do.
+        public readonly ?array $customer = null,
     ) {
     }
 
@@ -57,6 +70,7 @@ final class OrderRefundedPayload implements PayloadInterface
             reason: (string)($row['reason'] ?? ''),
             items: \is_array($row['items'] ?? null) ? \array_values($row['items']) : [],
             refundPayments: \is_array($row['refund_payments'] ?? null) ? \array_values($row['refund_payments']) : [],
+            customer: \is_array($row['customer'] ?? null) ? $row['customer'] : null,
             currency: isset($row['currency']) ? (string)$row['currency'] : null,
             fxRate: isset($row['fx_rate']) ? (string)$row['fx_rate'] : null,
             prepaymentEventId: isset($row['prepayment_event_id']) ? (string)$row['prepayment_event_id'] : null,
@@ -66,12 +80,18 @@ final class OrderRefundedPayload implements PayloadInterface
 
     public function toArray(): array
     {
-        $out = [
-            'order_id'        => $this->orderId,
-            'reason'          => $this->reason,
-            'items'           => $this->items,
-            'refund_payments' => $this->refundPayments,
-        ];
+        // Built key-by-key rather than as one literal so `customer` lands
+        // immediately after `order_id`, exactly where OrderShippedPayload puts
+        // it. The two events share the block, so they serialize it in the same
+        // place; it is optional here, which is the only reason it cannot simply
+        // sit in the literal.
+        $out = ['order_id' => $this->orderId];
+        if (null !== $this->customer) {
+            $out['customer'] = $this->customer;
+        }
+        $out['reason']          = $this->reason;
+        $out['items']           = $this->items;
+        $out['refund_payments'] = $this->refundPayments;
         if (null !== $this->currency) {
             $out['currency'] = $this->currency;
         }

@@ -7,6 +7,7 @@
     "required": ["order_id", "reason", "items", "refund_payments"],
     "properties": {
         "order_id": { "type": "string", "minLength": 1 },
+        "customer": { "$ref": "#/$defs/customer" },
         "reason": {
             "type": "string",
             "enum": ["customer_request", "chargeback", "merchant_initiated", "other"]
@@ -27,7 +28,30 @@
         "credit_note_number": { "type": "string", "minLength": 1 }
     },
     "$defs": {
-        "item": {
+        "customer": {
+            "type": "object",
+            "required": ["country_code", "is_b2b"],
+            "properties": {
+                "country_code": { "type": "string", "pattern": "^[A-Z]{2}$" },
+                "is_b2b": { "type": "boolean" },
+                "customer_id": { "type": "string", "minLength": 1 },
+                "name": { "type": "string" },
+                "email": { "type": "string" },
+                "vat_number": { "type": "string" },
+                "ean_number": { "type": "string", "pattern": "^[0-9]{13}$" },
+                "address": { "$ref": "#/$defs/address" }
+            }
+        },
+        "address": {
+            "type": "object",
+            "properties": {
+                "street": { "type": "string" },
+                "city": { "type": "string" },
+                "postal_code": { "type": "string" },
+                "country": { "type": "string", "pattern": "^[A-Z]{2}$" }
+            }
+        },
+                "item": {
             "type": "object",
             "required": ["type", "gross_amount", "vat_amount", "vat_rate"],
             "properties": {

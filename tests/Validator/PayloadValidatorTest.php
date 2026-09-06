@@ -405,6 +405,75 @@ final class PayloadValidatorTest extends TestCase
         self::assertSame('data.refund_payments', $this->firstError($result)->field);
     }
 
+    public function testRefundAcceptsACustomerBlock(): void
+    {
+        $data = [
+            'order_id' => 'O-1',
+            'customer' => ['country_code' => 'SE', 'is_b2b' => false],
+            'reason'   => 'customer_request',
+            'items'    => [['type' => 'physical', 'gross_amount' => '-100.00', 'vat_amount' => '-20.00', 'vat_rate' => '0.25']],
+            'refund_payments' => [['gateway' => 'stripe', 'original_transaction_id' => 'a', 'refund_transaction_id' => 'b', 'amount' => '100.00']],
+        ];
+
+        $result = $this->validator->validate($this->envelope(2, 'order.refunded', $data));
+
+        self::assertTrue($result->isValid(), $this->dump($result));
+    }
+
+    public function testRefundWithoutACustomerStaysValid(): void
+    {
+        // The field is optional on purpose: every producer shipping before this
+        // release omits it, and the receiver has a fallback. Requiring it would
+        // turn a compatible addition into a breaking one.
+        $data = [
+            'order_id' => 'O-1',
+            'reason'   => 'customer_request',
+            'items'    => [['type' => 'physical', 'gross_amount' => '-100.00', 'vat_amount' => '-20.00', 'vat_rate' => '0.25']],
+            'refund_payments' => [['gateway' => 'stripe', 'original_transaction_id' => 'a', 'refund_transaction_id' => 'b', 'amount' => '100.00']],
+        ];
+
+        $result = $this->validator->validate($this->envelope(2, 'order.refunded', $data));
+
+        self::assertTrue($result->isValid(), $this->dump($result));
+    }
+
+    public function testB2BRefundDoesNotRequireTheExtraInvoicingFields(): void
+    {
+        // The B2B customer rule is scoped to order.shipped, where e-conomic needs
+        // the fields to ISSUE an invoice. A refund issues nothing -- its customer
+        // block exists to route VAT and country -- so a B2B refund carrying only
+        // country_code and is_b2b must pass. Pinning this so the rule is not
+        // widened to refunds by reflex later.
+        $data = [
+            'order_id' => 'O-1',
+            'customer' => ['country_code' => 'DE', 'is_b2b' => true],
+            'reason'   => 'customer_request',
+            'items'    => [['type' => 'physical', 'gross_amount' => '-100.00', 'vat_amount' => '-20.00', 'vat_rate' => '0.25']],
+            'refund_payments' => [['gateway' => 'stripe', 'original_transaction_id' => 'a', 'refund_transaction_id' => 'b', 'amount' => '100.00']],
+        ];
+
+        $result = $this->validator->validate($this->envelope(2, 'order.refunded', $data));
+
+        self::assertTrue($result->isValid(), $this->dump($result));
+    }
+
+    public function testRefundRejectsAMalformedCustomerCountryCode(): void
+    {
+        // The block is only worth sending if it is trustworthy: a lowercase or
+        // 3-letter code must fail rather than reach the receiver's account map.
+        $data = [
+            'order_id' => 'O-1',
+            'customer' => ['country_code' => 'swe', 'is_b2b' => false],
+            'reason'   => 'customer_request',
+            'items'    => [['type' => 'physical', 'gross_amount' => '-100.00', 'vat_amount' => '-20.00', 'vat_rate' => '0.25']],
+            'refund_payments' => [['gateway' => 'stripe', 'original_transaction_id' => 'a', 'refund_transaction_id' => 'b', 'amount' => '100.00']],
+        ];
+
+        $result = $this->validator->validate($this->envelope(2, 'order.refunded', $data));
+
+        self::assertFalse($result->isValid());
+    }
+
     public function testB2BShippedRequiresExtraCustomerFields(): void
     {
         $data = [
