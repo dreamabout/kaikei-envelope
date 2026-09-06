@@ -184,6 +184,53 @@ final class PayloadRoundTripTest extends TestCase
         self::assertSame($in, $out);
     }
 
+    public function testOrderRefundedRoundTripCarriesTheCustomerBlock(): void
+    {
+        // The refund's own customer, in the SAME shape order.shipped carries.
+        // Without it the receiver has to look the customer up off the reversed
+        // order's earlier envelopes, which cannot resolve a sale that predates
+        // ingestion -- and a refund with no resolvable country was defaulting to
+        // DK, booking foreign refunds to Danish momskoder.
+        $in = [
+            'order_id' => 'O-301',
+            'customer' => [
+                'country_code' => 'SE',
+                'is_b2b'       => false,
+            ],
+            'reason' => 'customer_request',
+            'items'  => [
+                ['type' => 'physical', 'gross_amount' => '-100.00', 'vat_amount' => '-20.00', 'vat_rate' => '0.25'],
+            ],
+            'refund_payments' => [
+                ['gateway' => 'stripe', 'original_transaction_id' => 'pi_orig', 'refund_transaction_id' => 're_new', 'amount' => '100.00'],
+            ],
+            'currency' => 'SEK',
+        ];
+
+        $out = OrderRefundedPayload::fromArray($in)->toArray();
+        self::assertSame($in, $out);
+    }
+
+    public function testOrderRefundedWithoutACustomerOmitsTheKeyEntirely(): void
+    {
+        // Every producer shipping today omits it, so an absent customer must not
+        // become an empty array on the wire -- that would validate but tell the
+        // receiver "B2C, no country" instead of "I do not know", and the receiver
+        // deliberately distinguishes the two.
+        $out = OrderRefundedPayload::fromArray([
+            'order_id' => 'O-302',
+            'reason'   => 'other',
+            'items'    => [
+                ['type' => 'physical', 'gross_amount' => '-10.00', 'vat_amount' => '-2.00', 'vat_rate' => '0.25'],
+            ],
+            'refund_payments' => [
+                ['gateway' => 'stripe', 'original_transaction_id' => 'a', 'refund_transaction_id' => 'b', 'amount' => '10.00'],
+            ],
+        ])->toArray();
+
+        self::assertArrayNotHasKey('customer', $out);
+    }
+
     public function testPayoutPaidRoundTrip(): void
     {
         $in = [

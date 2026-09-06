@@ -9,7 +9,35 @@ and this project adheres to [Semantic Versioning][semver].
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.7.0...HEAD
+[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.8.0...HEAD
+
+## [1.8.0] - 2026-09-06
+
+### Added
+- **Optional `customer` on `order.refunded` (v2)** — the same `customer` block
+  `order.shipped` already carries, with the identical `$defs/customer` +
+  `$defs/address` definitions. Additive and **optional by design**: producers
+  shipping before this release omit it and stay valid, so the field is not added
+  to `required`.
+
+  Why it matters: `order.refunded` carried no customer, so the receiver had to
+  read the country off the reversed order's own `order.shipped` /
+  `payment.prepaid`. That lookup cannot resolve a sale predating ingestion, and a
+  refund with no resolvable country defaulted to DK — booking every foreign
+  refund to Danish revenue under Danish momskoder and corrupting the OSS return.
+
+  The B2B extra-field rule (`customer_id`, `name`, `vat_number`, `address`,
+  `email`/`ean_number`) stays scoped to `order.shipped`, where e-conomic needs
+  them to ISSUE an invoice. A refund issues nothing; its customer block exists to
+  route VAT and country, so a B2B refund carrying only `country_code` + `is_b2b`
+  is valid. Pinned by a test so the rule is not widened to refunds by reflex.
+
+  `OrderRefundedPayload`'s new `$customer` parameter is **appended** to the
+  constructor rather than placed next to the other optionals — inserting a
+  parameter mid-signature would silently break positional callers, which a minor
+  release must not do. `SCHEMA_VERSION` unchanged (2).
+
+[1.8.0]: https://github.com/dreamabout/kaikei-envelope/compare/v1.7.0...v1.8.0
 
 ## [1.7.0] - 2026-07-20
 
