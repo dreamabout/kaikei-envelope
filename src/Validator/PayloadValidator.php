@@ -423,6 +423,82 @@ final class PayloadValidator
             }
         }
 
+        return $this->presentmentErrors($data, $gross);
+    }
+
+    /**
+     * The presentment block: what the customer paid before the gateway
+     * converted it.
+     *
+     * ALL THREE OR NONE. A partial set cannot be interpreted -- an amount
+     * without a currency is a number with no unit, and a currency without a
+     * rate cannot be reconciled against the gross. Rejecting the partial set
+     * is the difference between a receiver that books nothing and one that
+     * books something plausible and wrong.
+     *
+     * The arithmetic (`presentment_amount * presentment_fx_rate ==
+     * gross_amount`) is what makes the block self-checking: the rate is
+     * derived by the producer from two amounts, so a rate that does not
+     * reproduce the gross means the producer read the wrong field. That is a
+     * real failure mode -- the gateway's own row carries several rate-shaped
+     * values that are NOT this rate.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return list<FieldError>
+     */
+    private function presentmentErrors(array $data, string $gross): array
+    {
+        $currency = $data['presentment_currency'] ?? null;
+        $amount = $data['presentment_amount'] ?? null;
+        $rate = $data['presentment_fx_rate'] ?? null;
+
+        $present = \array_filter(
+            ['presentment_currency' => $currency, 'presentment_amount' => $amount, 'presentment_fx_rate' => $rate],
+            static fn ($v): bool => null !== $v,
+        );
+
+        if (0 === \count($present)) {
+            return [];
+        }
+
+        if (3 !== \count($present)) {
+            $missing = \array_diff(
+                ['presentment_currency', 'presentment_amount', 'presentment_fx_rate'],
+                \array_keys($present),
+            );
+
+            return [new FieldError(
+                'data.presentment_currency',
+                'invariant_violated',
+                'presentment_currency, presentment_amount and presentment_fx_rate must be given together (missing: ' . \implode(', ', $missing) . ').',
+            )];
+        }
+
+        if (!\is_string($amount) || !\is_string($rate)) {
+            return [];
+        }
+
+        // Tolerance scales with the number of transactions in the payout: each
+        // one contributes its own half-cent of rounding on the presentment
+        // side, and the payout's gross is the sum of already-rounded lines. A
+        // flat one-cent tolerance would fail a large but perfectly correct
+        // payout.
+        $lineCount = \is_array($data['transaction_ids'] ?? null) ? \count($data['transaction_ids']) : 1;
+        $tolerance = \bcmul('0.01', (string) \max(1, $lineCount), 2);
+
+        $computed = \bcmul($amount, $rate, 2);
+        $delta = \bcsub($computed, $gross, 2);
+        $absDelta = 0 === \bccomp($delta, '0.00', 2) ? '0.00' : (\bccomp($delta, '0.00', 2) < 0 ? \bcmul($delta, '-1', 2) : $delta);
+
+        if (\bccomp($absDelta, $tolerance, 2) > 0) {
+            return [new FieldError(
+                'data.presentment_fx_rate',
+                'invariant_violated',
+                "presentment_amount ({$amount}) * presentment_fx_rate ({$rate}) = {$computed}, which differs from gross_amount ({$gross}) by more than the rounding tolerance ({$tolerance}).",
+            )];
+        }
+
         return [];
     }
 

@@ -19,6 +19,9 @@
         "payout_fee_amount": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
         "paid_at": { "type": "string", "format": "date-time" },
         "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
-        "fx_rate": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" }
+        "fx_rate": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
+        "presentment_currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
+        "presentment_amount": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
+        "presentment_fx_rate": { "type": "string", "pattern": "^\\d+\\.\\d{2,8}$" }
     }
 }

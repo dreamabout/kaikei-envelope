@@ -327,6 +327,135 @@ final class PayloadValidatorTest extends TestCase
         self::assertSame('data.payout_fee_amount', $this->firstError($result)->field);
     }
 
+    /**
+     * Real numbers from a Costplus payout: PLN 953,81 converted at 1,760543
+     * into DKK 1.679,22 (two transactions, so the payout gross is the sum of
+     * two already-rounded lines).
+     */
+    public function testPresentmentBlockAcceptedOnAConvertedPayout(): void
+    {
+        $result = $this->validator->validate($this->envelope(2, 'payout.paid', $this->convertedPayout()));
+
+        self::assertTrue($result->isValid(), $this->dump($result));
+    }
+
+    public function testPayoutWithoutAPresentmentBlockStaysValid(): void
+    {
+        $data = $this->convertedPayout();
+        unset($data['presentment_currency'], $data['presentment_amount'], $data['presentment_fx_rate']);
+
+        $result = $this->validator->validate($this->envelope(2, 'payout.paid', $data));
+
+        self::assertTrue($result->isValid(), $this->dump($result));
+    }
+
+    /**
+     * @dataProvider partialPresentmentBlocks
+     */
+    public function testAPartialPresentmentBlockIsRejected(string $omit): void
+    {
+        $data = $this->convertedPayout();
+        unset($data[$omit]);
+
+        $result = $this->validator->validate($this->envelope(2, 'payout.paid', $data));
+
+        self::assertSame(ValidationResult::HTTP_UNPROCESSABLE, $result->httpStatus);
+        self::assertSame('invariant_violated', $this->firstError($result)->code);
+        self::assertSame('data.presentment_currency', $this->firstError($result)->field);
+    }
+
+    /**
+     * @return array<string, array{0: string}>
+     */
+    public static function partialPresentmentBlocks(): array
+    {
+        return [
+            'no currency' => ['presentment_currency'],
+            'no amount'   => ['presentment_amount'],
+            'no rate'     => ['presentment_fx_rate'],
+        ];
+    }
+
+    /**
+     * The trap this field set exists to survive.
+     *
+     * The gateway row for a EUR payout carries `Fee Exchange Rate: 7.47` --
+     * the EUR->DKK rate applied to the FEE, because the fee is charged in DKK
+     * while the payout settles in EUR. A producer that reads that field as
+     * "the" exchange rate emits 7,47 for a payout where the settled amount was
+     * never converted at all and the true rate is 1,0.
+     *
+     * The arithmetic invariant catches it: 166,09 x 7,47 is 1.240,69, nowhere
+     * near the 166,09 gross. Without this check the receiver would book a
+     * seven-fold currency conversion that never happened.
+     */
+    public function testAFeeExchangeRateMistakenForTheSettlementRateIsRejected(): void
+    {
+        $data = $this->convertedPayout();
+        $data['gross_amount'] = '166.09';
+        $data['fee_amount'] = '0.00';
+        $data['net_amount'] = '166.09';
+        $data['transaction_ids'] = ['tx_eur'];
+        $data['currency'] = 'EUR';
+        $data['presentment_currency'] = 'EUR';
+        $data['presentment_amount'] = '166.09';
+        $data['presentment_fx_rate'] = '7.47073314';
+
+        $result = $this->validator->validate($this->envelope(2, 'payout.paid', $data));
+
+        self::assertSame(ValidationResult::HTTP_UNPROCESSABLE, $result->httpStatus);
+        self::assertSame('data.presentment_fx_rate', $this->firstError($result)->field);
+    }
+
+    public function testToleranceScalesWithTheNumberOfTransactions(): void
+    {
+        // Ten lines, each able to contribute half a cent of rounding on the
+        // presentment side: a three-cent drift is legitimate here and would
+        // fail a flat one-cent tolerance.
+        $data = $this->convertedPayout();
+        $data['transaction_ids'] = \array_map(static fn (int $i): string => "tx_{$i}", \range(1, 10));
+        $data['gross_amount'] = '1679.25';
+        $data['net_amount'] = '1679.25';
+        $data['fee_amount'] = '0.00';
+
+        $result = $this->validator->validate($this->envelope(2, 'payout.paid', $data));
+
+        self::assertTrue($result->isValid(), $this->dump($result));
+    }
+
+    public function testADriftBeyondToleranceIsStillRejected(): void
+    {
+        $data = $this->convertedPayout();
+        $data['gross_amount'] = '1700.00';
+        $data['net_amount'] = '1700.00';
+        $data['fee_amount'] = '0.00';
+
+        $result = $this->validator->validate($this->envelope(2, 'payout.paid', $data));
+
+        self::assertSame(ValidationResult::HTTP_UNPROCESSABLE, $result->httpStatus);
+        self::assertSame('data.presentment_fx_rate', $this->firstError($result)->field);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function convertedPayout(): array
+    {
+        return [
+            'payout_id'            => '783CE52B6BBDA47C1CC93D5A3EC1CCD8',
+            'gateway'              => 'costplus',
+            'transaction_ids'      => ['tx_1', 'tx_2'],
+            'gross_amount'         => '1679.22',
+            'fee_amount'           => '0.00',
+            'net_amount'           => '1679.22',
+            'paid_at'              => self::VALID_OCCURRED_AT,
+            'currency'             => 'DKK',
+            'presentment_currency' => 'PLN',
+            'presentment_amount'   => '953.81',
+            'presentment_fx_rate'  => '1.760543',
+        ];
+    }
+
     public function testPayoutFeeExceedingNetRejected(): void
     {
         $data = [

@@ -30,6 +30,22 @@ use Dreamabout\KaikeiEnvelope\PayloadInterface;
  *     itself (distinct from `fee_amount`, the per-transaction processing fee).
  *     Non-negative and must not exceed `net_amount`; the bank receives
  *     `net_amount - payout_fee_amount`.
+ *   - presentment_currency / presentment_amount / presentment_fx_rate :
+ *     what the CUSTOMER paid, before the gateway converted it. Present only
+ *     when a conversion actually happened; a same-currency payout omits all
+ *     three (the rate would be exactly 1 and carry no information).
+ *
+ * `presentment_fx_rate` is NOT `fx_rate`, and the two are easy to confuse:
+ *
+ *   - `fx_rate` converts THIS payout's `currency` into DKK for booking, and
+ *     follows e-conomic's convention of quoting per 100 units.
+ *   - `presentment_fx_rate` converts the PRESENTMENT currency into this
+ *     payout's `currency`, is quoted PER UNIT, and describes something the
+ *     gateway already did to the money before we saw it.
+ *
+ * So a PLN order settled in DKK carries `currency: "DKK"`, no `fx_rate` (DKK
+ * is the booking currency, nothing to convert), `presentment_currency: "PLN"`
+ * and `presentment_fx_rate: "1.760543"`.
  *
  * Arithmetic invariant (validated by `PayloadValidator`, NOT enforced
  * by this DTO's construction): `gross_amount == fee_amount + net_amount`
@@ -52,6 +68,9 @@ final class PayoutPaidPayload implements PayloadInterface
         public readonly ?string $currency = null,
         public readonly ?string $fxRate = null,
         public readonly ?string $payoutFeeAmount = null,
+        public readonly ?string $presentmentCurrency = null,
+        public readonly ?string $presentmentAmount = null,
+        public readonly ?string $presentmentFxRate = null,
     ) {
     }
 
@@ -77,6 +96,9 @@ final class PayoutPaidPayload implements PayloadInterface
             currency: isset($row['currency']) ? (string)$row['currency'] : null,
             fxRate: isset($row['fx_rate']) ? (string)$row['fx_rate'] : null,
             payoutFeeAmount: isset($row['payout_fee_amount']) ? (string)$row['payout_fee_amount'] : null,
+            presentmentCurrency: isset($row['presentment_currency']) ? (string)$row['presentment_currency'] : null,
+            presentmentAmount: isset($row['presentment_amount']) ? (string)$row['presentment_amount'] : null,
+            presentmentFxRate: isset($row['presentment_fx_rate']) ? (string)$row['presentment_fx_rate'] : null,
         );
     }
 
@@ -99,6 +121,15 @@ final class PayoutPaidPayload implements PayloadInterface
         }
         if (null !== $this->payoutFeeAmount) {
             $out['payout_fee_amount'] = $this->payoutFeeAmount;
+        }
+        if (null !== $this->presentmentCurrency) {
+            $out['presentment_currency'] = $this->presentmentCurrency;
+        }
+        if (null !== $this->presentmentAmount) {
+            $out['presentment_amount'] = $this->presentmentAmount;
+        }
+        if (null !== $this->presentmentFxRate) {
+            $out['presentment_fx_rate'] = $this->presentmentFxRate;
         }
 
         return $out;

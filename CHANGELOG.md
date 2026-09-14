@@ -9,7 +9,35 @@ and this project adheres to [Semantic Versioning][semver].
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.8.0...HEAD
+[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.9.0...HEAD
+
+## [1.9.0] - 2026-09-15
+
+### Added
+- **Optional presentment block on `payout.paid` (v2)** -- `presentment_currency`,
+  `presentment_amount` and `presentment_fx_rate`: what the customer actually paid,
+  before the gateway converted it. Additive and **optional by design**, so producers
+  shipping before this release omit them and stay valid; they are not added to
+  `required`.
+
+  Why it matters: when a customer pays in PLN, the gateway converts before we ever
+  see the money, so the payout leg said only "DKK 1.679,22". The order's own currency
+  was reachable from `order.shipped`, but at *our* book rate -- measured 0,04%-0,60%
+  away from the rate we were actually paid at, consistently in the same direction.
+  That difference is realised FX and was visible nowhere.
+
+  **All three or none.** A partial set is rejected: an amount without a currency has
+  no unit, and a currency without a rate cannot be reconciled against the gross.
+
+  **Self-checking.** `presentment_amount * presentment_fx_rate == gross_amount`,
+  within one cent per entry in `transaction_ids` (the gross is a sum of already-rounded
+  lines, so a flat tolerance would fail a large but correct payout).
+
+  **Not `fx_rate`.** `fx_rate` converts this payout's currency into DKK for booking
+  and is quoted per 100 units; `presentment_fx_rate` converts the presentment currency
+  into the payout's currency, is quoted per unit, and describes something the gateway
+  already did. See `docs/events/payout_paid.md` for the producer warning about
+  rate-shaped gateway fields that are not this rate.
 
 ## [1.8.0] - 2026-09-06
 
