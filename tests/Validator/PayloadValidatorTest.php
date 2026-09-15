@@ -456,6 +456,149 @@ final class PayloadValidatorTest extends TestCase
         ];
     }
 
+    /**
+     * A real PayPal capture: SEK 2.011,50 gross, SEK 81,50 fee, and EUR 170,28
+     * actually received. PayPal deducts its fee in SEK and converts the NET,
+     * so gross x rate (177,47) is NOT the received amount -- which is exactly
+     * why no cross-multiplication invariant exists here.
+     */
+    public function testSettlementBlockAcceptedOnAConvertedPayPalCapture(): void
+    {
+        $result = $this->validator->validate($this->envelope(2, 'order.captured', $this->convertedCapture()));
+
+        self::assertTrue($result->isValid(), $this->dump($result));
+    }
+
+    /**
+     * A real Stripe capture: SEK 2.478,43 converted at 0,0910579 to EUR 225,68.
+     * Stripe converts the GROSS, so here gross x rate DOES reproduce the
+     * settled amount. Both conventions must validate through the same rule.
+     */
+    public function testSettlementBlockAcceptedOnAConvertedStripeCaptureWithTheOppositeFeeConvention(): void
+    {
+        $data = $this->convertedCapture();
+        $data['amount'] = '2478.43';
+        $data['settlement_amount'] = '225.68';
+        $data['settlement_fx_rate'] = '0.0910579';
+
+        $result = $this->validator->validate($this->envelope(2, 'order.captured', $data));
+
+        self::assertTrue($result->isValid(), $this->dump($result));
+    }
+
+    public function testACaptureWithoutASettlementBlockStaysValid(): void
+    {
+        $data = $this->convertedCapture();
+        unset($data['settlement_currency'], $data['settlement_amount'], $data['settlement_fx_rate']);
+
+        $result = $this->validator->validate($this->envelope(2, 'order.captured', $data));
+
+        self::assertTrue($result->isValid(), $this->dump($result));
+    }
+
+    /**
+     * @dataProvider partialSettlementBlocks
+     */
+    public function testAPartialSettlementBlockIsRejected(string $omit): void
+    {
+        $data = $this->convertedCapture();
+        unset($data[$omit]);
+
+        $result = $this->validator->validate($this->envelope(2, 'order.captured', $data));
+
+        self::assertSame(ValidationResult::HTTP_UNPROCESSABLE, $result->httpStatus);
+        self::assertSame('data.settlement_currency', $this->firstError($result)->field);
+    }
+
+    /**
+     * @return array<string, array{0: string}>
+     */
+    public static function partialSettlementBlocks(): array
+    {
+        return [
+            'no currency' => ['settlement_currency'],
+            'no amount'   => ['settlement_amount'],
+            'no rate'     => ['settlement_fx_rate'],
+        ];
+    }
+
+    public function testASettlementBlockWhoseCurrencyMatchesTheEventIsRejected(): void
+    {
+        $data = $this->convertedCapture();
+        $data['settlement_currency'] = 'SEK';
+
+        $result = $this->validator->validate($this->envelope(2, 'order.captured', $data));
+
+        self::assertSame(ValidationResult::HTTP_UNPROCESSABLE, $result->httpStatus);
+        self::assertSame('data.settlement_currency', $this->firstError($result)->field);
+    }
+
+    public function testANonPositiveSettlementRateIsRejected(): void
+    {
+        $data = $this->convertedCapture();
+        $data['settlement_fx_rate'] = '0.00';
+
+        $result = $this->validator->validate($this->envelope(2, 'order.captured', $data));
+
+        self::assertSame(ValidationResult::HTTP_UNPROCESSABLE, $result->httpStatus);
+        self::assertSame('data.settlement_fx_rate', $this->firstError($result)->field);
+    }
+
+    public function testTheSettlementBlockAlsoAppliesToPaymentPrepaid(): void
+    {
+        $data = [
+            'order_id'            => 'O-1',
+            'customer'            => ['country_code' => 'DK', 'is_b2b' => false],
+            'gateway'             => 'paypal',
+            'transaction_id'      => 'pp_tx_1',
+            'prepaid_at'          => self::VALID_OCCURRED_AT,
+            'items'               => [
+                ['type' => 'physical', 'gross_amount' => '2011.50', 'vat_amount' => '402.30', 'vat_rate' => '0.25', 'unit_cost' => '800.00'],
+            ],
+            'currency'            => 'SEK',
+            'settlement_currency' => 'SEK',
+            'settlement_amount'   => '170.28',
+            'settlement_fx_rate'  => '0.08823002385849',
+        ];
+
+        $result = $this->validator->validate($this->envelope(2, 'payment.prepaid', $data));
+
+        self::assertSame(ValidationResult::HTTP_UNPROCESSABLE, $result->httpStatus, 'same-currency block must be refused here too');
+        self::assertSame('data.settlement_currency', $this->firstError($result)->field);
+    }
+
+    /**
+     * PayPal quotes its rate to fourteen decimals. A narrower pattern would
+     * reject a correct payload.
+     */
+    public function testAFourteenDecimalRateIsAccepted(): void
+    {
+        $data = $this->convertedCapture();
+        $data['settlement_fx_rate'] = '0.08823002385849';
+
+        $result = $this->validator->validate($this->envelope(2, 'order.captured', $data));
+
+        self::assertTrue($result->isValid(), $this->dump($result));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function convertedCapture(): array
+    {
+        return [
+            'order_id'            => 'O-FX-1',
+            'gateway'             => 'paypal',
+            'transaction_id'      => 'pp_cap_1',
+            'amount'              => '2011.50',
+            'captured_at'         => self::VALID_OCCURRED_AT,
+            'currency'            => 'SEK',
+            'settlement_currency' => 'EUR',
+            'settlement_amount'   => '170.28',
+            'settlement_fx_rate'  => '0.08823002385849',
+        ];
+    }
+
     public function testPayoutFeeExceedingNetRejected(): void
     {
         $data = [

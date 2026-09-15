@@ -18,7 +18,10 @@
         },
         "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
         "fx_rate": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
-        "invoice_number": { "type": "string", "minLength": 1 }
+        "invoice_number": { "type": "string", "minLength": 1 },
+        "settlement_currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
+        "settlement_amount": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
+        "settlement_fx_rate": { "type": "string", "pattern": "^\\d+\\.\\d{2,14}$" }
     },
     "$defs": {
         "customer": {

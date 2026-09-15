@@ -9,7 +9,34 @@ and this project adheres to [Semantic Versioning][semver].
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.9.0...HEAD
+[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.10.0...HEAD
+
+## [1.10.0] - 2026-09-15
+
+### Added
+- **Optional settlement block on `order.captured` and `payment.prepaid` (v2)** --
+  `settlement_currency`, `settlement_amount` and `settlement_fx_rate`: what a capture
+  became when the gateway converted it. Additive and **optional by design**; producers
+  shipping before this release omit them and stay valid.
+
+  The mirror image of v1.9.0's presentment block on `payout.paid`. There the event
+  currency is the settlement side and the block records the *before*; here the event
+  currency is already the customer's, so the block records the *after*.
+
+  Why it matters: PayPal emits no `payout.paid` at all, so a converted PayPal capture had
+  nowhere to carry its FX. Measured on real data, PayPal converts PLN/DKK/SEK to EUR and
+  stores an exact rate; without this block none of it reached the receiver.
+
+  **All three or none**, and a block whose `settlement_currency` equals `currency` is
+  rejected -- nothing was converted, so there is nothing to say.
+
+  **No `amount * rate == settlement_amount` invariant, deliberately.** Stripe converts the
+  gross and takes its fee afterwards in the settlement currency; PayPal deducts its fee
+  first, in the customer's currency, and converts the net. Measured 3 of 3 each way.
+  Asserting either convention would reject the other provider's correct payload, so the
+  validated properties are the universal ones: positive rate, differing currencies.
+
+  `settlement_fx_rate` accepts 2-14 decimals -- PayPal quotes to fourteen.
 
 ## [1.9.0] - 2026-09-15
 

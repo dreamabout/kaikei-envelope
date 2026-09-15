@@ -250,14 +250,14 @@ final class PayloadValidator
     {
         return match ($eventType) {
             EventType::OrderShipped => [...$this->b2bCustomerErrors($data), ...$this->itemLineErrors($data), ...$this->noCogsItemErrors($data)],
-            EventType::PaymentPrepaid => [...$this->itemLineErrors($data), ...$this->noCogsItemErrors($data)],
+            EventType::PaymentPrepaid => [...$this->itemLineErrors($data), ...$this->noCogsItemErrors($data), ...$this->settlementBlockErrors($data)],
             EventType::OrderRefunded => [...$this->refundErrors($data), ...$this->noCogsItemErrors($data)],
             EventType::PayoutPaid => $this->payoutErrors($data),
             EventType::OrderFee => $this->feeErrors($data),
             // account.fee reuses order.fee's positive-amount invariant (the
             // shop-level account fee must be a positive magnitude).
             EventType::AccountFee => $this->feeErrors($data),
-            EventType::OrderCaptured => [],
+            EventType::OrderCaptured => $this->settlementBlockErrors($data),
             // payout.disbursed carries a single gross amount -- no
             // cross-field arithmetic invariant the schema can't already
             // express (amount pattern, required keys). Schema-tier only.
@@ -424,6 +424,80 @@ final class PayloadValidator
         }
 
         return $this->presentmentErrors($data, $gross);
+    }
+
+    /**
+     * The settlement block on a CASH-IN event: what this money became when the
+     * gateway converted it.
+     *
+     * Mirror image of the presentment block on `payout.paid`. There, the event
+     * currency is the settlement side and the block records the before; here
+     * the event currency is already the customer's, so the block records the
+     * after.
+     *
+     * ALL THREE OR NONE, for the same reason as presentment: an amount without
+     * a currency has no unit.
+     *
+     * NO `amount * rate == settlement_amount` INVARIANT, deliberately. The
+     * providers deduct their fee on opposite sides of the conversion --
+     * Stripe converts the gross and takes its fee afterwards in the settlement
+     * currency; PayPal deducts its fee first, in the customer's currency, and
+     * converts the net. Measured on real captures, 3 of 3 each way. Asserting
+     * either convention would reject the other provider's correct payload, so
+     * what is checked is what holds universally: the rate is positive, and a
+     * block is only meaningful when the currencies actually differ.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return list<FieldError>
+     */
+    private function settlementBlockErrors(array $data): array
+    {
+        $present = \array_filter(
+            [
+                'settlement_currency' => $data['settlement_currency'] ?? null,
+                'settlement_amount' => $data['settlement_amount'] ?? null,
+                'settlement_fx_rate' => $data['settlement_fx_rate'] ?? null,
+            ],
+            static fn ($v): bool => null !== $v,
+        );
+
+        if (0 === \count($present)) {
+            return [];
+        }
+
+        if (3 !== \count($present)) {
+            $missing = \array_diff(
+                ['settlement_currency', 'settlement_amount', 'settlement_fx_rate'],
+                \array_keys($present),
+            );
+
+            return [new FieldError(
+                'data.settlement_currency',
+                'invariant_violated',
+                'settlement_currency, settlement_amount and settlement_fx_rate must be given together (missing: ' . \implode(', ', $missing) . ').',
+            )];
+        }
+
+        $rate = (string) $present['settlement_fx_rate'];
+        if (\bccomp($rate, '0', 8) <= 0) {
+            return [new FieldError('data.settlement_fx_rate', 'invariant_violated', "settlement_fx_rate must be positive (got {$rate}).")];
+        }
+
+        // A block whose currencies match describes no conversion, so it is
+        // noise at best and a misread rate at worst. Producers omit it; saying
+        // so here stops a well-meaning "always emit" change from landing.
+        $currency = \strtoupper((string) ($data['currency'] ?? ''));
+        $settlement = \strtoupper((string) $present['settlement_currency']);
+        if ('' !== $currency && $currency === $settlement) {
+            return [new FieldError(
+                'data.settlement_currency',
+                'invariant_violated',
+                "settlement_currency ({$settlement}) equals currency -- nothing was converted, so the settlement block must be omitted.",
+            )];
+        }
+
+        return [];
     }
 
     /**

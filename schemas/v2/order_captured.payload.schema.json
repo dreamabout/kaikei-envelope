@@ -12,6 +12,9 @@
         "amount": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
         "captured_at": { "type": "string", "format": "date-time" },
         "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
-        "fx_rate": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" }
+        "fx_rate": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
+        "settlement_currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
+        "settlement_amount": { "type": "string", "pattern": "^-?\\d+\\.\\d{2}$" },
+        "settlement_fx_rate": { "type": "string", "pattern": "^\\d+\\.\\d{2,14}$" }
     }
 }
