@@ -9,7 +9,45 @@ and this project adheres to [Semantic Versioning][semver].
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.10.0...HEAD
+[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.11.0...HEAD
+
+## [1.11.0] - 2026-09-15
+
+### Added
+- **`customer.postal_code` on `order.shipped`, `order.refunded` and `payment.prepaid`** --
+  the DELIVERY postal code, from the same address as `country_code`. Additive and
+  optional; producers shipping before this release omit it and stay valid.
+
+  A country code cannot distinguish Las Palmas from Madrid, Büsingen from Berlin, or
+  Jungholz from Vienna -- and each of those pairs has a different VAT answer. The Canary
+  Islands, Ceuta, Melilla, Büsingen, Heligoland, Livigno, Campione, Åland, Mount Athos and
+  the French overseas departments are **outside the EU VAT area entirely**; Jungholz and
+  Mittelberg sit inside it at 19% rather than Austria's 20%; Madeira and the Azores at 22%
+  and 16% rather than mainland Portugal's 23%. Without a postal code every one of those is
+  indistinguishable from an ordinary mainland order, in the data and in the books.
+
+  **Delivery, not billing.** Place of supply for B2C goods follows the destination, and
+  `country_code` is already used that way. A billing postal code paired with a delivery
+  country is wrong in exactly the cases this field exists to catch.
+
+### Added (opt-in)
+- **Conditional validation of the delivery postal code**, OFF by default. Enable with
+  `new PayloadValidator(requireDeliveryPostalCode: true)`.
+
+  Required only when the event is a VAT-bearing supply, the country is one that contains
+  territories (`AT`, `DE`, `EL`/`GR`, `ES`, `FI`, `FR`, `IT`, `PT`), and at least one
+  non-gift-card line carries a rate above zero. Conditional rather than blanket because a
+  blanket rule would reject addresses that legitimately have no postal code -- Ireland's
+  Eircode is frequently not collected -- and stopping an accounting pipeline on a good
+  order is worse than the blind spot it closes. Every country in that list has universal
+  postal coverage, so the requirement can always be met.
+
+  For B2B the existing `customer.address.postal_code` satisfies it; the same digits are
+  never asked for twice.
+
+  **Off by default so enforcement follows evidence.** The receiver measures how many orders
+  arrive without the field; enforcement is switched on once that count reaches zero, so
+  live traffic is never 422'd to discover whether the producer was ready.
 
 ## [1.10.0] - 2026-09-15
 
