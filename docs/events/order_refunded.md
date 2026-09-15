@@ -52,3 +52,37 @@ Schemas:
     }
 }
 ```
+
+### Delivery postal code
+
+`customer.postal_code` is the **delivery** postal code, taken from the same address as
+`customer.country_code`. This is not a formality: place of supply for B2C goods follows the
+destination, and a billing postal code paired with a delivery country produces a wrong answer in
+exactly the cases the field exists to catch — a mainland-billed order shipped to Las Palmas.
+
+**Why it is needed at all.** A country code cannot distinguish Las Palmas from Madrid, Büsingen
+from Berlin, or Jungholz from Vienna, and each of those pairs has a different VAT answer. The
+Canary Islands, Ceuta, Melilla, Büsingen, Heligoland, Livigno, Campione, Åland, Mount Athos and
+the French overseas departments are **outside the EU VAT area entirely**; Jungholz and Mittelberg
+are inside it at 19% rather than 20%; Madeira and the Azores at 22% and 16% rather than 23%.
+Without a postal code every one of those is indistinguishable from an ordinary mainland order.
+
+**It is conditional, not blanket.** Required only when all three hold:
+
+1. the event is a VAT-bearing supply — `order.shipped`, `order.refunded`, `payment.prepaid`;
+2. `country_code` is a member state containing territories — `AT`, `DE`, `EL`/`GR`, `ES`, `FI`,
+   `FR`, `IT`, `PT`;
+3. at least one non-gift-card line has a `vat_rate` above zero.
+
+Optional everywhere else. Every country in that list has universal postal coverage, so the
+requirement can always be met — no order is ever rejected for lacking something it could not have
+had. A blanket requirement would reject addresses that legitimately have no postal code (Ireland's
+Eircode is frequently not collected) and stop an accounting pipeline on a good order.
+
+For B2B orders the existing `customer.address.postal_code` satisfies the rule; the same digits are
+never asked for twice.
+
+**Enforcement is off by default.** `new PayloadValidator(requireDeliveryPostalCode: true)` turns it
+on. The intended rollout is to leave it off while the receiver measures how many orders arrive
+without the field, and to enable it only once that count reaches zero — so live traffic is never
+rejected to discover whether the producer was ready.

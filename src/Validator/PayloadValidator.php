@@ -46,14 +46,34 @@ final class PayloadValidator
      */
     private const NO_COGS_ITEM_TYPES = ['shipping', 'fee', 'giftwrapping', 'discount'];
 
+    /**
+     * Member states containing territories where the VAT answer differs from the mainland, and
+     * where a postal code is therefore the only way to tell which applies.
+     *
+     * Every country here has universal postal coverage, so the requirement is always
+     * satisfiable: no order is ever rejected for lacking something it could not have had. That
+     * is why the rule is this list rather than "all EU countries" — Ireland's Eircode is
+     * frequently not collected, and several destinations have no postal code at all.
+     */
+    private const TERRITORY_COUNTRIES = ['AT', 'DE', 'EL', 'ES', 'FI', 'FR', 'GR', 'IT', 'PT'];
+
     private readonly Validator $opis;
     private readonly string $schemaDir;
+    private readonly bool $requireDeliveryPostalCode;
 
-    public function __construct(?Validator $opis = null, ?string $schemaDir = null)
+    /**
+     * @param bool $requireDeliveryPostalCode enforce the conditional postal-code rule
+     *                                        ({@see deliveryPostalCodeErrors}). Default OFF:
+     *                                        turning it on before the producer populates the
+     *                                        field would 422 live traffic to discover something
+     *                                        the receiver can simply measure first.
+     */
+    public function __construct(?Validator $opis = null, ?string $schemaDir = null, bool $requireDeliveryPostalCode = false)
     {
         $this->opis = $opis ?? new Validator();
         $resolved = $schemaDir ?? \dirname(__DIR__, 2) . '/schemas';
         $this->schemaDir = \rtrim($resolved, '/');
+        $this->requireDeliveryPostalCode = $requireDeliveryPostalCode;
     }
 
     /**
@@ -249,9 +269,9 @@ final class PayloadValidator
     private function checkInvariants(EventType $eventType, array $data): array
     {
         return match ($eventType) {
-            EventType::OrderShipped => [...$this->b2bCustomerErrors($data), ...$this->itemLineErrors($data), ...$this->noCogsItemErrors($data)],
-            EventType::PaymentPrepaid => [...$this->itemLineErrors($data), ...$this->noCogsItemErrors($data), ...$this->settlementBlockErrors($data)],
-            EventType::OrderRefunded => [...$this->refundErrors($data), ...$this->noCogsItemErrors($data)],
+            EventType::OrderShipped => [...$this->b2bCustomerErrors($data), ...$this->itemLineErrors($data), ...$this->noCogsItemErrors($data), ...$this->deliveryPostalCodeErrors($data)],
+            EventType::PaymentPrepaid => [...$this->itemLineErrors($data), ...$this->noCogsItemErrors($data), ...$this->settlementBlockErrors($data), ...$this->deliveryPostalCodeErrors($data)],
+            EventType::OrderRefunded => [...$this->refundErrors($data), ...$this->noCogsItemErrors($data), ...$this->deliveryPostalCodeErrors($data)],
             EventType::PayoutPaid => $this->payoutErrors($data),
             EventType::OrderFee => $this->feeErrors($data),
             // account.fee reuses order.fee's positive-amount invariant (the
@@ -574,6 +594,116 @@ final class PayloadValidator
         }
 
         return [];
+    }
+
+    /**
+     * A VAT-bearing supply to a member state that contains territories must carry the DELIVERY
+     * postal code, because without it the correct VAT treatment is unknowable.
+     *
+     * Buesingen is German soil outside the EU VAT area; Jungholz is Austrian soil at 19% rather
+     * than 20%; the Canary Islands are Spanish by country code and outside the VAT area by law.
+     * A country code alone cannot tell any of them from the mainland, so an order to Las Palmas
+     * and an order to Madrid are the same order as far as the receiver can see.
+     *
+     * The rule is deliberately conditional rather than blanket. Requiring a postal code on every
+     * event would reject addresses that legitimately have none — Ireland's Eircode is often not
+     * collected, and several destinations have no postal code system at all — and an accounting
+     * pipeline stopping on a good address is worse than the blind spot it closes. Every country
+     * in {@see TERRITORY_COUNTRIES} has universal postal coverage, so this requirement can
+     * always be met.
+     *
+     * Enforcement is off by default. The receiver measures how many orders lack the field first;
+     * enforcement is switched on once that count reaches zero, so live traffic is never 422'd to
+     * find out whether the producer was ready.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return list<FieldError>
+     */
+    private function deliveryPostalCodeErrors(array $data): array
+    {
+        if (!$this->requireDeliveryPostalCode) {
+            return [];
+        }
+
+        $customer = $data['customer'] ?? null;
+        if (!\is_array($customer)) {
+            return [];
+        }
+
+        $country = \strtoupper(\trim((string) ($customer['country_code'] ?? '')));
+        if (!\in_array($country, self::TERRITORY_COUNTRIES, true)) {
+            return [];
+        }
+
+        if (!$this->hasVatBearingLine($data)) {
+            // A zero-rated or gift-card-only order has no VAT to get wrong.
+            return [];
+        }
+
+        if ($this->deliveryPostalCode($customer) !== null) {
+            return [];
+        }
+
+        return [new FieldError(
+            'data.customer.postal_code',
+            'invalid_data',
+            \sprintf(
+                "Field 'data.customer.postal_code' is required for VAT-bearing supplies to %s, "
+                .'which contains territories where the VAT treatment differs from the mainland. '
+                .'Send the DELIVERY postal code, from the same address as country_code.',
+                $country,
+            ),
+        )];
+    }
+
+    /**
+     * The delivery postal code, preferring the dedicated field and falling back to the B2B
+     * address block so a B2B order that already carries one is not asked for it twice.
+     *
+     * @param array<string, mixed> $customer
+     */
+    private function deliveryPostalCode(array $customer): ?string
+    {
+        $direct = \trim((string) ($customer['postal_code'] ?? ''));
+        if ('' !== $direct) {
+            return $direct;
+        }
+
+        $address = $customer['address'] ?? null;
+        if (!\is_array($address)) {
+            return null;
+        }
+
+        $fromAddress = \trim((string) ($address['postal_code'] ?? ''));
+
+        return '' === $fromAddress ? null : $fromAddress;
+    }
+
+    /**
+     * Whether any line actually carries VAT.
+     *
+     * @param array<string, mixed> $data
+     */
+    private function hasVatBearingLine(array $data): bool
+    {
+        $items = $data['items'] ?? null;
+        if (!\is_array($items)) {
+            return false;
+        }
+
+        foreach ($items as $item) {
+            if (!\is_array($item) || 'gift_card' === ($item['type'] ?? 'physical')) {
+                continue;
+            }
+
+            $rate = \trim((string) ($item['vat_rate'] ?? '0'));
+            if ('' !== $rate && 0 !== \bccomp($rate, '0', 6)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
