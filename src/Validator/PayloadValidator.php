@@ -650,8 +650,8 @@ final class PayloadValidator
             'invalid_data',
             \sprintf(
                 "Field 'data.customer.postal_code' is required for VAT-bearing supplies to %s, "
-                .'which contains territories where the VAT treatment differs from the mainland. '
-                .'Send the DELIVERY postal code, from the same address as country_code.',
+                . 'which contains territories where the VAT treatment differs from the mainland. '
+                . 'Send the DELIVERY postal code, from the same address as country_code.',
                 $country,
             ),
         )];

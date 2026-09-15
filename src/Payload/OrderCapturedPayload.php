@@ -115,7 +115,6 @@ final class OrderCapturedPayload implements PayloadInterface
 
         }
 
-
         return $out;
     }
 }

@@ -132,7 +132,6 @@ final class PaymentPrepaidPayload implements PayloadInterface
 
         }
 
-
         return $out;
     }
 }
