@@ -41,6 +41,13 @@
     "ean_number": {
       "type": "string",
       "pattern": "^[0-9]{13}$"
+    },
+    "payments": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/payment"
+      },
+      "description": "How the sale was paid, one entry per payment method. An array because an order can be split across methods (gift card plus card), which a single gateway field cannot express -- the same reason order.refunded uses refund_payments[]. Optional and additive: producers that omit it stay valid, and the receiver can still resolve the method from the cash-in leg (payment.prepaid / order.captured) by order_id."
     }
   },
   "$defs": {
@@ -147,6 +154,31 @@
         "unit_cost": {
           "type": "string",
           "pattern": "^\\d+\\.\\d{2}$"
+        }
+      }
+    },
+    "payment": {
+      "type": "object",
+      "required": [
+        "gateway",
+        "amount"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "gateway": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Payment method the money came in on, as the accounting slug (same vocabulary as payment.prepaid / order.captured)."
+        },
+        "transaction_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Gateway-side reference, when there is one. OPTIONAL: gift cards and hand-entered payments legitimately have none, and requiring it would only produce placeholder values."
+        },
+        "amount": {
+          "type": "string",
+          "pattern": "^-?\\d+\\.\\d{2}$",
+          "description": "Amount taken on this leg, in the document currency."
         }
       }
     }

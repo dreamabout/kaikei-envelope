@@ -46,6 +46,22 @@ final class OrderShippedPayload implements PayloadInterface
         public readonly ?string $prepaymentEventId = null,
         public readonly ?string $invoiceNumber = null,
         public readonly ?string $eanNumber = null,
+        /**
+         * How the sale was paid, one entry per method.
+         *
+         * An array because an order can be split across methods (gift card
+         * plus card), which a single `gateway` field cannot express -- the
+         * same reason `order.refunded` carries `refund_payments[]`.
+         *
+         * Optional: a producer that omits it stays valid, and the receiver can
+         * still reach the method through the cash-in leg (`payment.prepaid` /
+         * `order.captured`) on the same `order_id`. This leg is a convenience
+         * for receivers that post revenue straight to a payment-method
+         * account, NOT a second source of truth for the cash-in itself.
+         *
+         * @var list<array<string,mixed>>
+         */
+        public readonly array $payments = [],
     ) {
     }
 
@@ -63,6 +79,7 @@ final class OrderShippedPayload implements PayloadInterface
             prepaymentEventId: isset($row['prepayment_event_id']) ? (string)$row['prepayment_event_id'] : null,
             invoiceNumber: isset($row['invoice_number']) ? (string)$row['invoice_number'] : null,
             eanNumber: isset($row['ean_number']) ? (string)$row['ean_number'] : null,
+            payments: \is_array($row['payments'] ?? null) ? \array_values($row['payments']) : [],
         );
     }
 
@@ -87,6 +104,11 @@ final class OrderShippedPayload implements PayloadInterface
         }
         if (null !== $this->eanNumber) {
             $out['ean_number'] = $this->eanNumber;
+        }
+        // Omitted entirely when empty: the schema forbids unknown keys, and an
+        // empty array would assert "paid by nothing" rather than "not stated".
+        if ([] !== $this->payments) {
+            $out['payments'] = $this->payments;
         }
 
         return $out;

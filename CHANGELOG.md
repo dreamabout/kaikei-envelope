@@ -9,7 +9,35 @@ and this project adheres to [Semantic Versioning][semver].
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.11.0...HEAD
+[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.12.0...HEAD
+
+## [1.12.0] - 2026-09-16
+
+### Added
+
+- `order.shipped` gains an optional **`payments[]`** array: how the sale was
+  paid, one entry per method (`gateway` required, `amount` required as exact
+  2-decimal, `transaction_id` optional).
+
+  It is an **array**, not a single `gateway` field, for the same reason
+  `order.refunded` carries `refund_payments[]`: an order can be split across
+  methods (gift card plus card), and one field would have to either lie or go
+  silent in exactly that case.
+
+  `transaction_id` is **optional** here, unlike on a refund leg. Gift cards and
+  hand-entered payments legitimately have no gateway reference, and requiring
+  one would only manufacture placeholder values.
+
+  **This does not move the source of truth for cash-in.** `order.shipped` is the
+  revenue leg; it recognises the sale and moves no money. The authoritative
+  cash-in remains `payment.prepaid` / `order.captured`, where `gateway` is
+  required. `payments[]` exists for receivers that post revenue straight to a
+  payment-method account and would otherwise have to wait for, and join to, a
+  later event.
+
+  Additive and optional: producers that omit it stay valid.
+
+[1.12.0]: https://github.com/dreamabout/kaikei-envelope/compare/v1.11.0...v1.12.0
 
 ## [1.11.0] - 2026-09-15
 
