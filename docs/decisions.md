@@ -208,3 +208,45 @@ item-carrying events. It is a reduction/adjustment line (negative
 `gross_amount`/`vat_amount`) used notably on credit notes (`order.refunded`);
 same `unit_cost` prohibition, and VAT-bearing (proportional VAT — no zero-VAT
 rule). Additive MINOR (`1.3.0` → `1.4.0`), v2-only.
+
+## D7 — `order.shipped.payments[]` is advisory, and it is an array
+
+**Track:** shipped-payment-legs
+
+**Decision:** `order.shipped` gains an optional `payments[]` array — one entry
+per payment method, `{gateway, amount}` required and `transaction_id` optional.
+`payment.prepaid` and `order.captured` remain the authoritative record of
+cash-in.
+
+**Why not a single `gateway` field.** An order can be split across methods (a
+gift card covering part of the basket, a card the rest). One field would have to
+name a single method and be wrong, or go silent — and it would go silent in
+exactly the case where the breakdown matters. `order.refunded` already models
+this as `refund_payments[]`; using the same shape on the sale side keeps one
+concept in one form.
+
+**Why advisory rather than authoritative.** `order.shipped` recognises revenue;
+it moves no money. Putting cash-in truth on it would create two records of one
+fact that can legitimately diverge — authorised on one method and captured on
+another, a method changed after shipping, a capture that never happens. The
+field exists so a receiver posting revenue straight to a payment-method account
+need not hold the posting open until a cash-in event arrives. **Where the two
+disagree, the cash-in leg wins**, and the docs say so rather than leaving a
+receiver to guess.
+
+**Why `transaction_id` is optional here** though required on a refund leg. Gift
+cards and hand-entered payments have no gateway reference. Requiring one would
+not produce a reference, it would produce a placeholder — the `"unknown"` the
+refund legs already carry for manual credits. An absent field says "there is
+none"; `"unknown"` says nothing while appearing to say something. This is a
+deliberate departure from the refund-leg shape, not an oversight.
+
+**No sum invariant.** Unlike `refund_payments[]`, which must sum to the credited
+total, `payments[]` is not balanced against the order total. Partial captures,
+deposits and instalments legitimately do not add up, and rejecting them would
+stop an accounting pipeline on a good order.
+
+**Versioning.** Additive optional field on v2 → MINOR (`1.11.0` → `1.12.0`); no
+`schema_version` bump, mirroring the `order.fee` (1.1.0) and delivery
+postal-code (1.11.0) precedents. v1 stays frozen as the faithful mirror of
+Kaikei's deployed contract, so the field is v2-only.

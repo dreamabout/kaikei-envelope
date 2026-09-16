@@ -18,6 +18,7 @@ Schemas:
 | `fx_rate` (v2) / `fx_rate_to_dkk` (v1) | string | no | Positive decimal rate to DKK at supply time. |
 | `prepayment_event_id` | string | no | ULID linking back to a prior `payment.prepaid`. |
 | `invoice_number` | string | no | Producer-assigned invoice number. |
+| `payments` | array | no | How the sale was paid, one entry per method — see [How the sale was paid](#how-the-sale-was-paid). Each entry `{gateway, amount}` (+ optional `transaction_id`). Added in **1.12.0**. |
 
 ### Customer
 
@@ -72,10 +73,61 @@ The B2B-conditional requirements are enforced by `PayloadValidator`
             { "type": "physical", "gross_amount": "125.00", "vat_amount": "25.00", "vat_rate": "0.25", "unit_cost": "40.00", "quantity": 2 }
         ],
         "currency": "DKK",
-        "invoice_number": "INV-2026-0001"
+        "invoice_number": "INV-2026-0001",
+        "payments": [
+            { "gateway": "stripe", "transaction_id": "pi_3Pq...", "amount": "130.00" },
+            { "gateway": "giftcard", "amount": "50.00" }
+        ]
     }
 }
 ```
+
+### How the sale was paid
+
+`payments[]` states which payment methods the sale came in on, one entry per
+method. It is **optional**: omit it and nothing is lost — the receiver can still
+reach the method through the cash-in leg on the same `order_id`.
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `gateway` | string | yes | Payment method as the accounting slug — the same vocabulary `payment.prepaid` and `order.captured` use, so a split method resolves to the same account on every leg. |
+| `amount` | string | yes | Amount taken on this leg, in the document currency. 2-decimal (`^-?\d+\.\d{2}$`). |
+| `transaction_id` | string | no | Gateway-side reference, when one exists. |
+
+**Why an array rather than a single `gateway`.** An order can be split across
+methods — a gift card covering part of the basket and a card the rest. A single
+field would have to either name one method and be wrong, or say nothing at all,
+and it would say nothing in exactly the case where the breakdown matters most.
+`order.refunded` already carries `refund_payments[]` for the same reason; this is
+that shape, on the sale side.
+
+**Why `transaction_id` is optional here** but required on a refund leg. Gift
+cards and hand-entered payments legitimately have no gateway reference.
+Requiring one would not produce the reference — it would produce a placeholder,
+which is the `"unknown"` that refund legs already carry for manual credits. A
+field that is absent says "there is none"; a field reading `"unknown"` says
+nothing while looking like it says something.
+
+**This is not the source of truth for cash-in.** `order.shipped` is the revenue
+leg: it recognises the sale and moves no money. `payment.prepaid` and
+`order.captured` remain authoritative for what the customer actually paid with,
+and `gateway` is **required** on both. `payments[]` exists so a receiver that
+posts revenue straight to a payment-method account can do so at the moment of
+the sale, instead of holding the posting open until a cash-in event arrives and
+joining on `order_id`.
+
+That distinction matters because two records of one fact can disagree: an order
+authorised on one method and captured on another, a method changed after
+shipping, a capture that never happens. **When they disagree, the cash-in leg is
+right.** A receiver reconciling settled money should read `payment.prepaid` /
+`order.captured`; `payments[]` answers "what should this revenue be posted
+against", not "what money arrived".
+
+**Amounts are not an invariant.** The receiver must not assume
+`sum(payments[].amount)` equals the order total. A partial capture, a deposit,
+or an order paid in instalments will not balance, and the envelope deliberately
+does not reject that — unlike `order.refunded`, where the refund legs must sum
+to the credited total.
 
 ### Delivery postal code
 
