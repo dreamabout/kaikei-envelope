@@ -10,7 +10,12 @@
         "amount_net": "120.00",
         "vat_amount": "0.00",
         "vat_free_amount": "0.00",
-        "amount_gross": "120.00"
+        "amount_gross": "120.00",
+        "amount_net_dkk": "895.05",
+        "vat_amount_dkk": "0.00",
+        "vat_free_amount_dkk": "0.00",
+        "amount_gross_dkk": "895.05",
+        "fx_rate": "745.87"
     },
     "vat_treatment": "eu_reverse_charge",
     "supplier": {
@@ -25,6 +30,7 @@
             "quantity": "2",
             "unit_price": "60.00",
             "amount": "120.00",
+            "amount_dkk": "895.05",
             "item_number": "LAMPE-7"
         }
     ],

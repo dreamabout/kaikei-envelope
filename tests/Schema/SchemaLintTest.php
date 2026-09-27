@@ -13,8 +13,8 @@ use PHPUnit\Framework\TestCase;
  *
  *   1. Every schema compiles in opis without throwing (valid JSON
  *      Schema draft 2020-12).
- *   2. Each event type's `valid.json` fixture validates against its
- *      payload schema.
+ *   2. Each event type's `valid.json` fixture, and any `valid_*.json`
+ *      beside it, validates against its payload schema.
  *   3. Each `invalid_*.json` fixture is REJECTED by its payload
  *      schema.
  *
@@ -141,6 +141,12 @@ final class SchemaLintTest extends TestCase
                     self::SCHEMA_ROOT . "/{$version}/{$type}.payload.schema.json",
                     self::FIXTURE_ROOT . "/{$version}/{$type}/valid.json",
                 ];
+                foreach (\glob(self::FIXTURE_ROOT . "/{$version}/{$type}/valid_*.json") ?: [] as $fixture) {
+                    yield "{$version}:{$type}:" . \basename($fixture) => [
+                        self::SCHEMA_ROOT . "/{$version}/{$type}.payload.schema.json",
+                        $fixture,
+                    ];
+                }
             }
         }
     }

@@ -14,6 +14,10 @@ use Dreamabout\KaikeiEnvelope\PayloadInterface;
  * and `offsets[]`: the prepayments this invoice settles, each with the VAT
  * already deducted on it, so kaikei does not deduct it twice.
  *
+ * In another currency than DKK, `document` also carries its totals in DKK and
+ * `fx_rate` (1.14.0), and every line its `amount_dkk`. The arrays carry them
+ * as sent; the rules are in `PayloadValidator` and docs/events/purchase.md.
+ *
  * Required: client_id, obligation_id, document, vat_treatment, supplier, lines,
  * approval, document_file. Optional: fees, offsets, deviations.
  */

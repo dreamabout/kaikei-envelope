@@ -9,7 +9,40 @@ and this project adheres to [Semantic Versioning][semver].
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.13.0...HEAD
+[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.14.0...HEAD
+
+## [1.14.0] - 2026-09-28
+
+### Added
+
+- **DKK amounts on the purchase documents** (P, F, K), so transit (5510) nets to
+  exactly zero per invoice in another currency. Dreamshop converts; kaikei books the
+  DKK numbers as sent and never converts itself.
+
+  `document` gains optional `amount_net_dkk`, `vat_amount_dkk`,
+  `vat_free_amount_dkk`, `amount_gross_dkk` (decimal strings, two places) and
+  `fx_rate` (DKK per 100 units, two places, as on the package's other events; for
+  display in e-conomic only). On F and K, `lines[].amount_dkk` is the line's landed
+  cost in DKK, excluding VAT and including its share of `fees[]`.
+
+  Tier-3 rules: when `currency` is not DKK all five document fields are required,
+  and on F and K `amount_dkk` on every line (`invalid_data`). A DKK document may
+  leave them all out, but not half of them.
+  `amount_net_dkk + vat_free_amount_dkk + vat_amount_dkk == amount_gross_dkk`, and
+  on F and K `sum(lines[].amount_dkk) == amount_net_dkk + vat_free_amount_dkk`
+  (`invariant_violated`). See `docs/events/purchase.md`.
+
+- `valid_*.json` fixtures beside `valid.json` are run as further valid examples:
+  an F in EUR with a fee and three lines, and a P in EUR.
+
+### Changed
+
+- A P, F or K in another currency than DKK **without** the DKK amounts is refused
+  from 1.14.0. No sender was live on 1.13. The payloads are closed
+  (`additionalProperties: false`), so kaikei must run 1.14 before Dreamshop sends the
+  fields. The K example (`valid.json`, EUR) now carries them.
+
+[1.14.0]: https://github.com/dreamabout/kaikei-envelope/compare/v1.13.0...v1.14.0
 
 ## [1.13.0] - 2026-09-27
 

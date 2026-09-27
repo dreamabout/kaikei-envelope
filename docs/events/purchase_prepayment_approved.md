@@ -9,6 +9,8 @@ Schema: [v2](../../schemas/v2/purchase_prepayment_approved.payload.schema.json) 
 Example: [`valid.json`](../../tests/fixtures/v2/purchase_prepayment_approved/valid.json) --
 shaped like a real proforma (DKK, domestic 25 %, two lines at a 30 % discount, no
 due date), with a made-up supplier and amounts.
+[`valid_eur.json`](../../tests/fixtures/v2/purchase_prepayment_approved/valid_eur.json) is
+a prepayment in EUR with its DKK totals.
 
 ## `data` fields
 
@@ -16,7 +18,7 @@ due date), with a made-up supplier and amounts.
 |---|---|---|---|
 | `client_id` | string | yes | The kaikei client. Foreign client: `klient_forkert`. |
 | `obligation_id` | string | yes | Dreamshop's id for the obligation; the idempotency key. |
-| `document` | object | yes | `due_date` must be `null`. Totals must balance. |
+| `document` | object | yes | `due_date` must be `null`. Totals must balance. In another currency than DKK also the totals in DKK and `fx_rate`. |
 | `vat_treatment` | string | yes | `domestic` \| `eu_reverse_charge` \| `import` \| `none` |
 | `supplier` | object | yes | `vat_number` is `null` only outside the EU. |
 | `lines` | array | yes | At least one line. |
@@ -25,5 +27,5 @@ due date), with a made-up supplier and amounts.
 | `approval` | object | yes | `approved_by` (Workspace e-mail), `approved_at`. |
 | `document_file` | object | yes | Where kaikei fetches the document. |
 
-The blocks, the balance rule, the supplier lookup and the document fetch are shared
+The blocks, the balance rule, the DKK amounts, the supplier lookup and the document fetch are shared
 by P, F and K and described once in [`purchase.md`](purchase.md).

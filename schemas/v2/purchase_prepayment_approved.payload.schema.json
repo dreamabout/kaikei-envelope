@@ -81,7 +81,7 @@
                 "vat_free_amount",
                 "amount_gross"
             ],
-            "description": "The document's own totals, as printed on it. amount_net + vat_free_amount + vat_amount == amount_gross is enforced by the validator (tier 3). All amounts are positive magnitudes, credit notes included: the event type says it is a credit.",
+            "description": "The document's own totals, as printed on it. amount_net + vat_free_amount + vat_amount == amount_gross is enforced by the validator (tier 3). All amounts are positive magnitudes, credit notes included: the event type says it is a credit. When currency is not DKK the document also carries its totals in DKK and fx_rate (1.14.0); they may be left out of a DKK document, but are then sent all or none.",
             "properties": {
                 "number": {
                     "type": "string",
@@ -118,6 +118,31 @@
                     "type": "string",
                     "pattern": "^-?\\d+\\.\\d{2}$",
                     "description": "The document total including VAT."
+                },
+                "amount_net_dkk": {
+                    "type": "string",
+                    "pattern": "^-?\\d+\\.\\d{2}$",
+                    "description": "amount_net in DKK, as Dreamshop converted it. Required when currency is not DKK (validator, tier 3); kaikei never converts itself."
+                },
+                "vat_amount_dkk": {
+                    "type": "string",
+                    "pattern": "^-?\\d+\\.\\d{2}$",
+                    "description": "vat_amount in DKK. Required when currency is not DKK."
+                },
+                "vat_free_amount_dkk": {
+                    "type": "string",
+                    "pattern": "^-?\\d+\\.\\d{2}$",
+                    "description": "vat_free_amount in DKK. Required when currency is not DKK."
+                },
+                "amount_gross_dkk": {
+                    "type": "string",
+                    "pattern": "^-?\\d+\\.\\d{2}$",
+                    "description": "amount_gross in DKK. Required when currency is not DKK. amount_net_dkk + vat_free_amount_dkk + vat_amount_dkk == amount_gross_dkk (validator, tier 3). kaikei books it as the supplier posting's amount in base currency."
+                },
+                "fx_rate": {
+                    "type": "string",
+                    "pattern": "^-?\\d+\\.\\d{2}$",
+                    "description": "DKK per 100 units of currency, as on the package's other events (e-conomic's convention). Required when currency is not DKK. For display in e-conomic only: the DKK amounts are what is booked, and no rule checks them against the rate."
                 },
                 "payment_reference": {
                     "type": "string",

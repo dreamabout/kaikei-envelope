@@ -46,6 +46,36 @@ final class PurchasePayloadRoundTripTest extends TestCase
         yield 'purchase.rejected'             => ['purchase_rejected', PurchaseRejectedPayload::fromArray(...)];
     }
 
+    /**
+     * The other examples beside valid.json (1.14.0: documents in EUR with DKK
+     * amounts) round-trip too: the DKK fields ride in `document` and `lines[]`.
+     *
+     * @dataProvider moreFixtures
+     *
+     * @param \Closure(array<string,mixed>):PayloadInterface $fromArray
+     */
+    public function testOtherValidFixturesRoundTrip(string $file, \Closure $fromArray): void
+    {
+        $contents = \file_get_contents($file);
+        self::assertNotFalse($contents);
+        /** @var array<string,mixed> $in */
+        $in = \json_decode($contents, true, 512, \JSON_THROW_ON_ERROR);
+
+        self::assertSame($in, $fromArray($in)->toArray());
+    }
+
+    /**
+     * @return iterable<string,array{0:string,1:\Closure(array<string,mixed>):PayloadInterface}>
+     */
+    public static function moreFixtures(): iterable
+    {
+        foreach (self::fixtures() as $name => [$dir, $fromArray]) {
+            foreach (\glob(__DIR__ . "/../fixtures/v2/{$dir}/valid_*.json") ?: [] as $file) {
+                yield "{$name}:" . \basename($file) => [$file, $fromArray];
+            }
+        }
+    }
+
     public function testAPrepaymentKeepsItsNullDueDate(): void
     {
         $out = PurchasePrepaymentApprovedPayload::fromArray($this->fixture('purchase_prepayment_approved'))->toArray();

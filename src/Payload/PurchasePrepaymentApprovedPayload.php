@@ -13,6 +13,10 @@ use Dreamabout\KaikeiEnvelope\PayloadInterface;
  * `document.due_date` is always null; the VAT is reposted on the payment date,
  * which arrives separately as `purchase.prepayment_paid`.
  *
+ * In another currency than DKK, `document` also carries its totals in DKK and
+ * `fx_rate` (1.14.0). The arrays carry them
+ * as sent; the rules are in `PayloadValidator` and docs/events/purchase.md.
+ *
  * Required: client_id, obligation_id, document, vat_treatment, supplier, lines,
  * approval, document_file. Optional: fees, deviations.
  *

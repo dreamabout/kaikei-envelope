@@ -128,6 +128,167 @@ final class PurchaseEventsTest extends TestCase
         self::assertSame('data.supplier.vat_number', $this->firstError($result)->field);
     }
 
+    // ----- the document events: DKK amounts (1.14.0) ------------------
+
+    /**
+     * A document in DKK is sent as in 1.13: none of the DKK fields.
+     *
+     * @dataProvider documentEvents
+     */
+    public function testADkkDocumentNeedsNoDkkFields(string $eventType, string $dir): void
+    {
+        $data = $this->fixture($dir);
+        $data['document']['currency'] = 'DKK';
+        $data = $this->withoutDkkFields($data);
+
+        self::assertTrue($this->validator->validate($this->envelope($eventType, $data))->isValid());
+    }
+
+    /**
+     * @dataProvider foreignDocuments
+     */
+    public function testAForeignDocumentCarriesEveryDkkTotalAndTheRate(string $eventType, string $file, string $field): void
+    {
+        $data = $this->fixtureFile($file);
+        unset($data['document'][$field]);
+
+        $result = $this->validator->validate($this->envelope($eventType, $data));
+
+        self::assertSame(ValidationResult::HTTP_UNPROCESSABLE, $result->httpStatus);
+        self::assertSame(["data.document.{$field}=invalid_data"], $this->fields($result));
+    }
+
+    /**
+     * @return iterable<string,array{0:string,1:string,2:string}>
+     */
+    public static function foreignDocuments(): iterable
+    {
+        $documents = [
+            'P' => ['purchase.prepayment_approved', 'purchase_prepayment_approved/valid_eur.json'],
+            'F' => ['purchase.invoice_approved', 'purchase_invoice_approved/valid_eur.json'],
+            'K' => ['purchase.credit_note_approved', 'purchase_credit_note_approved/valid.json'],
+        ];
+        foreach ($documents as $name => [$eventType, $file]) {
+            foreach (['amount_net_dkk', 'vat_amount_dkk', 'vat_free_amount_dkk', 'amount_gross_dkk', 'fx_rate'] as $field) {
+                yield "{$name} without {$field}" => [$eventType, $file, $field];
+            }
+        }
+    }
+
+    /**
+     * @dataProvider linedForeignDocuments
+     */
+    public function testEveryLineOfAForeignInvoiceOrCreditNoteCarriesItsDkkAmount(string $eventType, string $file): void
+    {
+        $data = $this->fixtureFile($file);
+        unset($data['lines'][0]['amount_dkk']);
+
+        $result = $this->validator->validate($this->envelope($eventType, $data));
+
+        self::assertSame(ValidationResult::HTTP_UNPROCESSABLE, $result->httpStatus);
+        self::assertSame(['data.lines[0].amount_dkk=invalid_data'], $this->fields($result));
+    }
+
+    /**
+     * @return iterable<string,array{0:string,1:string}>
+     */
+    public static function linedForeignDocuments(): iterable
+    {
+        yield 'F' => ['purchase.invoice_approved', 'purchase_invoice_approved/valid_eur.json'];
+        yield 'K' => ['purchase.credit_note_approved', 'purchase_credit_note_approved/valid.json'];
+    }
+
+    /**
+     * A prepayment has no line amounts in DKK: the schema refuses them.
+     */
+    public function testAPrepaymentLineHasNoDkkAmount(): void
+    {
+        $data = $this->fixtureFile('purchase_prepayment_approved/valid_eur.json');
+        $data['lines'][0]['amount_dkk'] = '6861.03';
+
+        $result = $this->validator->validate($this->envelope('purchase.prepayment_approved', $data));
+
+        self::assertSame('invalid_data', $this->firstError($result)->code);
+    }
+
+    /**
+     * @dataProvider linedForeignDocuments
+     */
+    public function testTheLineAmountsInDkkAddUpToTheDocument(string $eventType, string $file): void
+    {
+        $data = $this->fixtureFile($file);
+        $data['lines'][0]['amount_dkk'] = \bcsub((string) $data['lines'][0]['amount_dkk'], '0.01', 2);
+
+        $result = $this->validator->validate($this->envelope($eventType, $data));
+
+        self::assertSame(ValidationResult::HTTP_UNPROCESSABLE, $result->httpStatus);
+        self::assertSame(['data.lines=invariant_violated'], $this->fields($result));
+    }
+
+    /**
+     * The fee share is in the lines, so their DKK sum is net plus VAT-free, not net
+     * alone.
+     */
+    public function testAVatFreeAmountInDkkCountsTowardsTheLines(): void
+    {
+        $data = $this->fixtureFile('purchase_invoice_approved/valid_eur.json');
+        $data['document']['vat_free_amount']     = '10.00';
+        $data['document']['amount_gross']        = '2529.53';
+        $data['document']['vat_free_amount_dkk'] = '74.59';
+        $data['document']['amount_gross_dkk']    = '18867.08';
+        $data['lines'][2]['amount_dkk']          = '2390.10';
+
+        self::assertTrue($this->validator->validate($this->envelope('purchase.invoice_approved', $data))->isValid());
+    }
+
+    /**
+     * @dataProvider foreignDocumentFiles
+     */
+    public function testTheDkkTotalsMustBalance(string $eventType, string $file): void
+    {
+        $data = $this->fixtureFile($file);
+        $data['document']['vat_amount_dkk'] = '0.01';
+
+        $result = $this->validator->validate($this->envelope($eventType, $data));
+
+        self::assertSame(ValidationResult::HTTP_UNPROCESSABLE, $result->httpStatus);
+        self::assertSame(['data.document.amount_gross_dkk=invariant_violated'], $this->fields($result));
+    }
+
+    /**
+     * @return iterable<string,array{0:string,1:string}>
+     */
+    public static function foreignDocumentFiles(): iterable
+    {
+        yield 'P' => ['purchase.prepayment_approved', 'purchase_prepayment_approved/valid_eur.json'];
+        yield from self::linedForeignDocuments();
+    }
+
+    /**
+     * A DKK document may carry the DKK fields, but then all of them, and they add
+     * up. Half a set is refused rather than guessed at.
+     */
+    public function testADkkDocumentWithHalfTheDkkFieldsIsRefused(): void
+    {
+        $data = $this->fixture('purchase_invoice_approved');
+        $data['document']['amount_gross_dkk'] = '11600.00';
+
+        $errors = $this->fields($this->validator->validate($this->envelope('purchase.invoice_approved', $data)));
+
+        self::assertContains('data.document.fx_rate=invalid_data', $errors);
+        self::assertContains('data.lines[0].amount_dkk=invalid_data', $errors);
+    }
+
+    public function testADkkDocumentMayCarryACompleteDkkSet(): void
+    {
+        $data = $this->fixture('purchase_invoice_approved');
+        $data['document'] += ['amount_net_dkk' => '9280.00', 'vat_amount_dkk' => '2320.00', 'vat_free_amount_dkk' => '0.00', 'amount_gross_dkk' => '11600.00', 'fx_rate' => '100.00'];
+        $data['lines'][0]['amount_dkk'] = '7022.00';
+        $data['lines'][1]['amount_dkk'] = '2258.00';
+
+        self::assertTrue($this->validator->validate($this->envelope('purchase.invoice_approved', $data))->isValid());
+    }
+
     // ----- the status events: which subject ----------------------------
 
     /**
@@ -281,6 +442,41 @@ final class PurchaseEventsTest extends TestCase
         $decoded = \json_decode($contents, true, 512, \JSON_THROW_ON_ERROR);
 
         return $decoded;
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
+    private function fixtureFile(string $file): array
+    {
+        $contents = \file_get_contents(self::FIXTURE_ROOT . "/{$file}");
+        self::assertNotFalse($contents);
+        /** @var array<string,mixed> $decoded */
+        $decoded = \json_decode($contents, true, 512, \JSON_THROW_ON_ERROR);
+
+        return $decoded;
+    }
+
+    /**
+     * @param array<string,mixed> $data
+     *
+     * @return array<string,mixed>
+     */
+    private function withoutDkkFields(array $data): array
+    {
+        /** @var array<string,mixed> $document */
+        $document = $data['document'];
+        unset($document['amount_net_dkk'], $document['vat_amount_dkk'], $document['vat_free_amount_dkk'], $document['amount_gross_dkk'], $document['fx_rate']);
+        $data['document'] = $document;
+
+        /** @var list<array<string,mixed>> $lines */
+        $lines = $data['lines'];
+        foreach ($lines as $i => $line) {
+            unset($lines[$i]['amount_dkk']);
+        }
+        $data['lines'] = $lines;
+
+        return $data;
     }
 
     /**

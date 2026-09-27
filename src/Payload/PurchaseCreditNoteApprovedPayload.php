@@ -16,6 +16,10 @@ use Dreamabout\KaikeiEnvelope\PayloadInterface;
  * printed; the event type is what makes it a credit. `document.due_date` may be
  * null, which is usual for a credit note.
  *
+ * In another currency than DKK, `document` also carries its totals in DKK and
+ * `fx_rate` (1.14.0), and every line its `amount_dkk`. The arrays carry them
+ * as sent; the rules are in `PayloadValidator` and docs/events/purchase.md.
+ *
  * Required: client_id, obligation_id, credits_obligation_id, document,
  * vat_treatment, supplier, lines, approval, document_file. Optional: fees,
  * deviations.

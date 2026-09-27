@@ -44,10 +44,10 @@ They share one shape. F adds `offsets[]`; K adds `credits_obligation_id`.
 
 | Block | Required | Contents |
 |---|---|---|
-| `document` | yes | `number`, `date`, `due_date`, `currency`, `amount_net`, `vat_amount`, `vat_free_amount`, `amount_gross`, `payment_reference?` |
+| `document` | yes | `number`, `date`, `due_date`, `currency`, `amount_net`, `vat_amount`, `vat_free_amount`, `amount_gross`, `amount_net_dkk?`, `vat_amount_dkk?`, `vat_free_amount_dkk?`, `amount_gross_dkk?`, `fx_rate?`, `payment_reference?` |
 | `vat_treatment` | yes | `domestic` \| `eu_reverse_charge` \| `import` \| `none` |
 | `supplier` | yes | `supplier_id`, `name`, `vat_number`, `country`, `economic_supplier_number?` |
-| `lines[]` | yes, >= 1 | `description`, `quantity`, `unit_price`, `amount`, `item_number?`, `ean?`, `purchase_order_id?`, `purchase_order_line_id?` |
+| `lines[]` | yes, >= 1 | `description`, `quantity`, `unit_price`, `amount`, `amount_dkk?` (F and K), `item_number?`, `ean?`, `purchase_order_id?`, `purchase_order_line_id?` |
 | `fees[]` | no | `label`, `amount` |
 | `deviations[]` | no | `line?`, `field`, `expected`, `found`, `amount` |
 | `approval` | yes | `approved_by` (Workspace e-mail), `approved_at` |
@@ -59,6 +59,47 @@ checked by the validator (tier 3, `invariant_violated` on
 amounts as sent, so a document that does not add up is refused rather than booked
 wrong. `amount_net` is the VAT-able base; `vat_free_amount` is `0.00` when there is
 none. The totals are the document's own and include `fees[]`.
+
+### A document in another currency: the DKK amounts
+
+Added in 1.14.0. **Dreamshop converts, and kaikei never does.** Dreamshop values
+stock at landed cost in DKK with its own rate on the document date, and the goods
+receipt sends that value as `amount_dkk`. Transit (5510) only nets to exactly zero
+per invoice if kaikei books the same DKK numbers, so the document carries them:
+
+| Field | On | Contents |
+|---|---|---|
+| `document.amount_net_dkk` | P, F, K | `amount_net` in DKK |
+| `document.vat_amount_dkk` | P, F, K | `vat_amount` in DKK |
+| `document.vat_free_amount_dkk` | P, F, K | `vat_free_amount` in DKK |
+| `document.amount_gross_dkk` | P, F, K | `amount_gross` in DKK |
+| `document.fx_rate` | P, F, K | DKK per 100 units of `currency`, two decimals, as on the package's other events |
+| `lines[].amount_dkk` | F, K | The line's landed cost in DKK, excluding VAT, **including its share of `fees[]`** |
+
+The rules (tier 3):
+
+- **`currency` is not `DKK`:** all five document fields are required, and on F and
+  K every line has `amount_dkk`. A missing one is `invalid_data` on its path.
+- **`currency` is `DKK`:** the fields may be left out, as in 1.13. If any of them is
+  sent, all of them are -- half a set is refused rather than guessed at.
+- **The DKK totals balance:** `amount_net_dkk + vat_free_amount_dkk + vat_amount_dkk
+  == amount_gross_dkk` (`invariant_violated` on `data.document.amount_gross_dkk`).
+- **The lines add up (F, K):** `sum(lines[].amount_dkk) == amount_net_dkk +
+  vat_free_amount_dkk` (`invariant_violated` on `data.lines`). The fee share is in
+  the lines, so the sum is the document's net, not the lines' own `amount`s
+  converted. Dreamshop must spread its rounding remainder over the lines; rounding
+  each line on its own will often miss by an øre, and that is refused on purpose.
+
+**Why totals and not an exact rate.** Dreamshop's rates are floats with EUR = 1, so
+a rate to DKK is a cross rate that cannot be carried exactly, and a rule like
+`round(amount_net × rate, 2) == amount_net_dkk` would refuse real invoices. With the
+DKK totals every rule is checked exactly, without floats. `fx_rate` is shown in
+e-conomic and nothing checks it against the amounts. kaikei sets the supplier
+posting's `amountBaseCurrency` to `amount_gross_dkk` and books 5510 with the sum of
+the lines.
+
+A P has no `lines[].amount_dkk`: nothing is received into stock against a
+prepayment. The schema refuses the field there.
 
 **`quantity`** is a decimal string with up to three places, always positive.
 **`unit_price`** is the price per unit after any line discount, excluding VAT, with
@@ -150,5 +191,9 @@ sent to a webhook in Dreamshop with the same envelope, signature and
 
 ## Versioning
 
-New optional fields are additive (MINOR). A breaking change to any of these events
+New optional fields are additive (MINOR). The DKK amounts (1.14.0) are optional
+fields, but a P, F or K in another currency without them is refused from 1.14.0.
+No sender was live on 1.13, so nothing that worked stops working. The payloads have
+`additionalProperties: false`, so kaikei must run 1.14 before Dreamshop sends the
+fields. A breaking change to any of these events
 needs `schema_version: 3`.

@@ -1,0 +1,54 @@
+{
+    "client_id": "kasasagi",
+    "obligation_id": "01K6G1B3D5F7H9K1M3P5R7T9V1",
+    "document": {
+        "number": "PF-2026-0233",
+        "date": "2026-10-05",
+        "due_date": null,
+        "currency": "EUR",
+        "amount_net": "1211.00",
+        "vat_amount": "0.00",
+        "vat_free_amount": "0.00",
+        "amount_gross": "1211.00",
+        "amount_net_dkk": "9032.52",
+        "vat_amount_dkk": "0.00",
+        "vat_free_amount_dkk": "0.00",
+        "amount_gross_dkk": "9032.52",
+        "fx_rate": "745.87"
+    },
+    "vat_treatment": "eu_reverse_charge",
+    "supplier": {
+        "supplier_id": "2077",
+        "name": "Beispiel Leuchten GmbH",
+        "vat_number": "DE123456789",
+        "country": "DE",
+        "economic_supplier_number": 415
+    },
+    "lines": [
+        {
+            "description": "Pendel 12, messing",
+            "quantity": "2",
+            "unit_price": "460.00",
+            "amount": "920.00",
+            "item_number": "LAMPE-12"
+        },
+        {
+            "description": "Leuchtmittel E27",
+            "quantity": "3",
+            "unit_price": "97.00",
+            "amount": "291.00",
+            "item_number": "PAERE-E27"
+        }
+    ],
+    "approval": {
+        "approved_by": "indkoeb@kasasagi.dk",
+        "approved_at": "2026-09-24T09:15:00Z"
+    },
+    "document_file": {
+        "url": "https://admin.dreamshop.example/kaikei/documents/01K6G1B3D5F7H9K1M3P5R7T9V1",
+        "sha256": "b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c",
+        "mimetype": "application/pdf",
+        "filename": "proforma-PF-2026-0233.pdf",
+        "size_bytes": 71044
+    }
+}
