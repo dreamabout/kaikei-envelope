@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Dreamabout\KaikeiEnvelope\Tests\Schema;
 
 use Dreamabout\KaikeiEnvelope\Envelope;
+use Dreamabout\KaikeiEnvelope\EventType;
 use Dreamabout\KaikeiEnvelope\Payload\AccountFeePayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderCapturedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderFeePayload;
@@ -13,6 +14,13 @@ use Dreamabout\KaikeiEnvelope\Payload\OrderShippedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\PaymentPrepaidPayload;
 use Dreamabout\KaikeiEnvelope\Payload\PayoutDisbursedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\PayoutPaidPayload;
+use Dreamabout\KaikeiEnvelope\Payload\PurchaseBookedPayload;
+use Dreamabout\KaikeiEnvelope\Payload\PurchaseCreditNoteApprovedPayload;
+use Dreamabout\KaikeiEnvelope\Payload\PurchaseGoodsReceivedPayload;
+use Dreamabout\KaikeiEnvelope\Payload\PurchaseInvoiceApprovedPayload;
+use Dreamabout\KaikeiEnvelope\Payload\PurchasePrepaymentApprovedPayload;
+use Dreamabout\KaikeiEnvelope\Payload\PurchasePrepaymentPaidPayload;
+use Dreamabout\KaikeiEnvelope\Payload\PurchaseRejectedPayload;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
@@ -121,6 +129,52 @@ final class SchemaDtoEquivalenceTest extends TestCase
         yield 'order.fee'       => [self::SCHEMA_DIR . '/order_fee.payload.schema.json', OrderFeePayload::class];
         yield 'payout.disbursed' => [self::SCHEMA_DIR . '/payout_disbursed.payload.schema.json', PayoutDisbursedPayload::class];
         yield 'account.fee'     => [self::SCHEMA_DIR . '/account_fee.payload.schema.json', AccountFeePayload::class];
+        yield 'purchase.prepayment_approved'  => [self::SCHEMA_DIR . '/purchase_prepayment_approved.payload.schema.json', PurchasePrepaymentApprovedPayload::class];
+        yield 'purchase.invoice_approved'     => [self::SCHEMA_DIR . '/purchase_invoice_approved.payload.schema.json', PurchaseInvoiceApprovedPayload::class];
+        yield 'purchase.credit_note_approved' => [self::SCHEMA_DIR . '/purchase_credit_note_approved.payload.schema.json', PurchaseCreditNoteApprovedPayload::class];
+        yield 'purchase.goods_received'       => [self::SCHEMA_DIR . '/purchase_goods_received.payload.schema.json', PurchaseGoodsReceivedPayload::class];
+        yield 'purchase.prepayment_paid'      => [self::SCHEMA_DIR . '/purchase_prepayment_paid.payload.schema.json', PurchasePrepaymentPaidPayload::class];
+        yield 'purchase.booked'               => [self::SCHEMA_DIR . '/purchase_booked.payload.schema.json', PurchaseBookedPayload::class];
+        yield 'purchase.rejected'             => [self::SCHEMA_DIR . '/purchase_rejected.payload.schema.json', PurchaseRejectedPayload::class];
+    }
+
+    /**
+     * Every EventType case has a payload schema and a DTO pair above. A case added
+     * to the enum without both fails here instead of at the first delivery.
+     */
+    public function testEveryEventTypeHasASchemaDtoPair(): void
+    {
+        $paired = [];
+        foreach (self::schemaDtoPairs() as $eventType => $pair) {
+            $paired[] = $eventType;
+        }
+        $cases  = \array_map(static fn (EventType $t): string => $t->value, EventType::cases());
+
+        \sort($paired);
+        \sort($cases);
+
+        self::assertSame($cases, $paired);
+    }
+
+    /**
+     * The v2 envelope schema's event_type enum lists exactly the EventType cases.
+     * It had drifted before (payout.disbursed and account.fee were missing from it
+     * until 1.13.0) because nothing compared the two.
+     */
+    public function testEnvelopeSchemaEventTypeEnumMatchesEventType(): void
+    {
+        $contents = \file_get_contents(self::SCHEMA_DIR . '/envelope.schema.json');
+        self::assertNotFalse($contents);
+        /** @var array{properties:array{event_type:array{enum:list<string>}}} $schema */
+        $schema = \json_decode($contents, true, 512, \JSON_THROW_ON_ERROR);
+
+        $enum  = $schema['properties']['event_type']['enum'];
+        $cases = \array_map(static fn (EventType $t): string => $t->value, EventType::cases());
+
+        \sort($enum);
+        \sort($cases);
+
+        self::assertSame($cases, $enum);
     }
 
     /**

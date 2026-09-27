@@ -1,0 +1,7 @@
+{
+    "client_id": "kasasagi",
+    "obligation_id": "01K6A2M4P6R8T0V2X4Z6B8D0F2",
+    "source_event_type": "purchase.invoice_approved",
+    "reason": "leverandoer_forsvundet",
+    "message": "vat_number DK12345678 does not match DK87654321 on e-conomic supplier 318."
+}

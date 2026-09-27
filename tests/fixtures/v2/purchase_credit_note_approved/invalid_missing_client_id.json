@@ -1,0 +1,41 @@
+{
+    "obligation_id": "01K6F1C3E5G7J9K1M3N5P7Q9R1",
+    "credits_obligation_id": "01K6D0A2B4C6D8E0F2G4H6J8K0",
+    "document": {
+        "number": "GS-2026-0412",
+        "date": "2026-10-28",
+        "due_date": null,
+        "currency": "EUR",
+        "amount_net": "120.00",
+        "vat_amount": "0.00",
+        "vat_free_amount": "0.00",
+        "amount_gross": "120.00"
+    },
+    "vat_treatment": "eu_reverse_charge",
+    "supplier": {
+        "supplier_id": "2077",
+        "name": "Beispiel Leuchten GmbH",
+        "vat_number": "DE123456789",
+        "country": "DE"
+    },
+    "lines": [
+        {
+            "description": "Gutschrift: Transportschaden",
+            "quantity": "2",
+            "unit_price": "60.00",
+            "amount": "120.00",
+            "item_number": "LAMPE-7"
+        }
+    ],
+    "approval": {
+        "approved_by": "indkoeb@kasasagi.dk",
+        "approved_at": "2026-10-29T13:40:00Z"
+    },
+    "document_file": {
+        "url": "https://admin.dreamshop.example/kaikei/documents/01K6F1C3E5G7J9K1M3N5P7Q9R1",
+        "sha256": "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae",
+        "mimetype": "application/pdf",
+        "filename": "gutschrift-GS-2026-0412.pdf",
+        "size_bytes": 58710
+    }
+}

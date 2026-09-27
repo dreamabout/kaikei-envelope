@@ -25,6 +25,13 @@ namespace Dreamabout\KaikeiEnvelope;
  * `account.fee` (added 1.7.0) is additive: a standing shop-level provider
  * account fee (e.g. Rapyd's daily account fee), not tied to any order. No
  * `schema_version` bump.
+ *
+ * The seven `purchase.*` types (added 1.13.0) carry supplier obligations
+ * between Dreamshop and kaikei (ADR-020): five from Dreamshop (the approved
+ * P, F and K documents, a goods receipt and a prepayment's payment) and
+ * two status replies from kaikei (`purchase.booked`, `purchase.rejected`),
+ * on the same envelope and signature. Additive, v2 only: see
+ * {@see minimumSchemaVersion()}. See docs/events/purchase.md.
  */
 enum EventType: string
 {
@@ -37,6 +44,14 @@ enum EventType: string
     case PayoutDisbursed = 'payout.disbursed';
     case AccountFee      = 'account.fee';
 
+    case PurchasePrepaymentApproved = 'purchase.prepayment_approved';
+    case PurchaseInvoiceApproved    = 'purchase.invoice_approved';
+    case PurchaseCreditNoteApproved = 'purchase.credit_note_approved';
+    case PurchaseGoodsReceived      = 'purchase.goods_received';
+    case PurchasePrepaymentPaid     = 'purchase.prepayment_paid';
+    case PurchaseBooked             = 'purchase.booked';
+    case PurchaseRejected           = 'purchase.rejected';
+
     /**
      * Tolerant lookup -- returns null on unknown input rather than
      * throwing. The receiver uses this to short-circuit envelope
@@ -46,5 +61,25 @@ enum EventType: string
     public static function tryFromString(string $value): ?self
     {
         return self::tryFrom($value);
+    }
+
+    /**
+     * The first `schema_version` that carries this event type. v1 is frozen
+     * as the mirror of the contract deployed before the purchase events, so
+     * they exist from v2; the receiver answers a v1 envelope carrying one
+     * with `unknown_event_type`.
+     */
+    public function minimumSchemaVersion(): int
+    {
+        return match ($this) {
+            self::PurchasePrepaymentApproved,
+            self::PurchaseInvoiceApproved,
+            self::PurchaseCreditNoteApproved,
+            self::PurchaseGoodsReceived,
+            self::PurchasePrepaymentPaid,
+            self::PurchaseBooked,
+            self::PurchaseRejected => 2,
+            default => 1,
+        };
     }
 }

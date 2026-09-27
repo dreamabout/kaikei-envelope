@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Dreamabout\KaikeiEnvelope\Validator;
 
 use Dreamabout\KaikeiEnvelope\EventType;
+use Dreamabout\KaikeiEnvelope\VatNumber;
 use Opis\JsonSchema\Errors\ErrorFormatter;
 use Opis\JsonSchema\Errors\ValidationError;
 use Opis\JsonSchema\Helper;
@@ -140,12 +141,17 @@ final class PayloadValidator
             $errors[] = new FieldError('event_id', 'invalid_envelope', "Field 'event_id' must be a ULID or UUID.");
         }
 
-        if (!\is_string($envelope['event_type']) || null === EventType::tryFrom($envelope['event_type'])) {
+        $eventType = \is_string($envelope['event_type']) ? EventType::tryFrom($envelope['event_type']) : null;
+        if (null === $eventType) {
             $errors[] = new FieldError('event_type', 'unknown_event_type', "Field 'event_type' is not a recognized event type.");
         }
 
-        if (!\is_int($envelope['schema_version']) || !\in_array($envelope['schema_version'], self::SUPPORTED_SCHEMA_VERSIONS, true)) {
+        $version = $envelope['schema_version'];
+        if (!\is_int($version) || !\in_array($version, self::SUPPORTED_SCHEMA_VERSIONS, true)) {
             $errors[] = new FieldError('schema_version', 'unknown_schema_version', "Field 'schema_version' is not supported by this build.");
+        } elseif (null !== $eventType && $version < $eventType->minimumSchemaVersion()) {
+            // The event type exists, just not in this contract version (v1 is frozen).
+            $errors[] = new FieldError('event_type', 'unknown_event_type', "Event type '{$eventType->value}' is not part of schema_version {$version}; it requires {$eventType->minimumSchemaVersion()}.");
         }
 
         $occurredAt = $envelope['occurred_at'];
@@ -282,7 +288,121 @@ final class PayloadValidator
             // cross-field arithmetic invariant the schema can't already
             // express (amount pattern, required keys). Schema-tier only.
             EventType::PayoutDisbursed => [],
+            EventType::PurchasePrepaymentApproved,
+            EventType::PurchaseInvoiceApproved,
+            EventType::PurchaseCreditNoteApproved => [...$this->documentBalanceErrors($data), ...$this->supplierVatNumberErrors($data)],
+            EventType::PurchaseBooked => [...$this->statusSubjectErrors($data), ...$this->bookedSupplierNumberErrors($data)],
+            EventType::PurchaseRejected => $this->statusSubjectErrors($data),
+            // Single amounts and ids: nothing the schema cannot already say.
+            EventType::PurchaseGoodsReceived,
+            EventType::PurchasePrepaymentPaid => [],
         };
+    }
+
+    /**
+     * A purchase document's totals must add up: amount_net + vat_free_amount +
+     * vat_amount == amount_gross. kaikei books the amounts as sent and never
+     * computes VAT itself, so a document that does not balance would be booked
+     * wrong rather than rejected later.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return list<FieldError>
+     */
+    private function documentBalanceErrors(array $data): array
+    {
+        // Reached only after the data schema validated: the four amounts are
+        // present decimal strings.
+        $document = (array) ($data['document'] ?? []);
+        $net = (string) ($document['amount_net'] ?? '0');
+        $vatFree = (string) ($document['vat_free_amount'] ?? '0');
+        $vat = (string) ($document['vat_amount'] ?? '0');
+        $gross = (string) ($document['amount_gross'] ?? '0');
+
+        $sum = \bcadd(\bcadd($net, $vatFree, 2), $vat, 2);
+        if (0 !== \bccomp($sum, $gross, 2)) {
+            return [new FieldError(
+                'data.document.amount_gross',
+                'invariant_violated',
+                "amount_net ({$net}) + vat_free_amount ({$vatFree}) + vat_amount ({$vat}) = {$sum}, not amount_gross ({$gross}).",
+            )];
+        }
+
+        return [];
+    }
+
+    /**
+     * A supplier in the EU always has a VAT number; only one outside it may send
+     * null. kaikei checks the number against the supplier in e-conomic whichever
+     * way it found the supplier, so an EU supplier without one could never pass.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return list<FieldError>
+     */
+    private function supplierVatNumberErrors(array $data): array
+    {
+        $supplier = (array) ($data['supplier'] ?? []);
+        $country = (string) ($supplier['country'] ?? '');
+        if (null === ($supplier['vat_number'] ?? null) && VatNumber::isEuCountry($country)) {
+            return [new FieldError(
+                'data.supplier.vat_number',
+                'invariant_violated',
+                "Supplier in {$country} (EU) must have a vat_number; null is only allowed outside the EU.",
+            )];
+        }
+
+        return [];
+    }
+
+    /**
+     * A status reply names exactly one subject: the receipt when it answers a
+     * goods receipt, the obligation otherwise. Conditional presence, so
+     * `invalid_data` like the B2B customer fields.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return list<FieldError>
+     */
+    private function statusSubjectErrors(array $data): array
+    {
+        $isReceipt = EventType::PurchaseGoodsReceived->value === ($data['source_event_type'] ?? null);
+        $required = $isReceipt ? 'receipt_id' : 'obligation_id';
+        $forbidden = $isReceipt ? 'obligation_id' : 'receipt_id';
+        $source = (string) ($data['source_event_type'] ?? '');
+
+        $errors = [];
+        if (!\array_key_exists($required, $data)) {
+            $errors[] = new FieldError("data.{$required}", 'invalid_data', "Field 'data.{$required}' is required when source_event_type is {$source}.");
+        }
+        if (\array_key_exists($forbidden, $data)) {
+            $errors[] = new FieldError("data.{$forbidden}", 'invalid_data', "Field 'data.{$forbidden}' must be absent when source_event_type is {$source}.");
+        }
+
+        return $errors;
+    }
+
+    /**
+     * A booked document (P, F, K) was booked on an e-conomic supplier, and
+     * Dreamshop needs its number to store the link. A goods receipt or a
+     * prepayment's payment has no supplier posting, so there it is optional.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return list<FieldError>
+     */
+    private function bookedSupplierNumberErrors(array $data): array
+    {
+        $documentSources = [
+            EventType::PurchasePrepaymentApproved->value,
+            EventType::PurchaseInvoiceApproved->value,
+            EventType::PurchaseCreditNoteApproved->value,
+        ];
+        if (\in_array($data['source_event_type'] ?? null, $documentSources, true) && !\array_key_exists('supplier_number', $data)) {
+            return [new FieldError('data.supplier_number', 'invalid_data', "Field 'data.supplier_number' is required when a document (P, F or K) was booked.")];
+        }
+
+        return [];
     }
 
     /**

@@ -9,7 +9,43 @@ and this project adheres to [Semantic Versioning][semver].
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.12.0...HEAD
+[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.13.0...HEAD
+
+## [1.13.0] - 2026-09-27
+
+### Added
+
+- **Purchase events** -- the contract for supplier obligations between Dreamshop and
+  kaikei (ADR-020), on the existing envelope and signature. v2 only.
+
+  Dreamshop -> kaikei: `purchase.prepayment_approved` (profile P),
+  `purchase.invoice_approved` (F), `purchase.credit_note_approved` (K),
+  `purchase.goods_received` and `purchase.prepayment_paid`.
+  kaikei -> Dreamshop: `purchase.booked` and `purchase.rejected`.
+
+  Each has a v2 payload schema, a DTO under `src/Payload/`, a `valid.json` and
+  negative fixtures, and a page under `docs/events/` -- with the shared rules in
+  `docs/events/purchase.md`: `client_id` in `data`, idempotency on
+  `obligation_id` / `receipt_id` rather than `event_id`, the document file as a
+  signed URL into Dreamshop, and the order in which kaikei finds the supplier.
+
+  Tier-3 rules: a P/F/K document's totals balance
+  (`amount_net + vat_free_amount + vat_amount == amount_gross`); an EU supplier has
+  a `vat_number`; a status reply names exactly one of `obligation_id` and
+  `receipt_id`; `purchase.booked` of a document carries `supplier_number`.
+
+- **`VatNumber`** -- the one normalisation both sides use to compare VAT numbers
+  (`DK 12 34 56 78` == `12345678`), and the EU member list the supplier rule uses.
+
+- **`EventType::minimumSchemaVersion()`**. A v1 envelope carrying a purchase event
+  is refused with `unknown_event_type` instead of failing on a missing schema file.
+
+### Fixed
+
+- The v2 `envelope.schema.json` `event_type` enum lacked `payout.disbursed` and
+  `account.fee`. It now lists every `EventType` case, and a test keeps it so.
+
+[1.13.0]: https://github.com/dreamabout/kaikei-envelope/compare/v1.12.0...v1.13.0
 
 ## [1.12.0] - 2026-09-16
 

@@ -31,6 +31,17 @@ final class PayloadValidatorTest extends TestCase
         'account_fee'      => 'account.fee',
     ];
 
+    /** v2 only: v1 is the frozen mirror of the contract deployed before them. */
+    private const PURCHASE_EVENT_FOR_DIR = [
+        'purchase_prepayment_approved'  => 'purchase.prepayment_approved',
+        'purchase_invoice_approved'     => 'purchase.invoice_approved',
+        'purchase_credit_note_approved' => 'purchase.credit_note_approved',
+        'purchase_goods_received'       => 'purchase.goods_received',
+        'purchase_prepayment_paid'      => 'purchase.prepayment_paid',
+        'purchase_booked'               => 'purchase.booked',
+        'purchase_rejected'             => 'purchase.rejected',
+    ];
+
     private PayloadValidator $validator;
 
     protected function setUp(): void
@@ -58,7 +69,7 @@ final class PayloadValidatorTest extends TestCase
     public static function validFixtures(): iterable
     {
         foreach ([1, 2] as $version) {
-            foreach (self::EVENT_FOR_DIR as $dir => $eventType) {
+            foreach (self::eventsFor($version) as $dir => $eventType) {
                 yield "v{$version}:{$dir}" => [$version, $eventType, self::FIXTURE_ROOT . "/v{$version}/{$dir}/valid.json"];
             }
         }
@@ -85,8 +96,39 @@ final class PayloadValidatorTest extends TestCase
     public static function invalidFixtures(): iterable
     {
         foreach ([1, 2] as $version) {
-            foreach (self::EVENT_FOR_DIR as $dir => $eventType) {
+            foreach (self::eventsFor($version) as $dir => $eventType) {
                 foreach (\glob(self::FIXTURE_ROOT . "/v{$version}/{$dir}/invalid_*.json") ?: [] as $fixture) {
+                    yield "v{$version}:{$dir}:" . \basename($fixture) => [$version, $eventType, $fixture];
+                }
+            }
+        }
+    }
+
+    // ----- invariant tier (422) from invariant fixtures -------------
+
+    /**
+     * `invariant_*.json` fixtures pass the schema (SchemaLintTest proves it) and are
+     * rejected by a cross-field rule in tier 3.
+     *
+     * @dataProvider invariantFixtures
+     */
+    public function testInvariantFixtureRejectedAtInvariantTier(int $version, string $eventType, string $fixture): void
+    {
+        $result = $this->validator->validate($this->envelope($version, $eventType, $this->json($fixture)));
+
+        self::assertFalse($result->isValid());
+        self::assertSame(ValidationResult::HTTP_UNPROCESSABLE, $result->httpStatus);
+        self::assertSame('invariant_violated', $this->firstError($result)->code, $this->dump($result));
+    }
+
+    /**
+     * @return iterable<string,array{0:int,1:string,2:string}>
+     */
+    public static function invariantFixtures(): iterable
+    {
+        foreach ([1, 2] as $version) {
+            foreach (self::eventsFor($version) as $dir => $eventType) {
+                foreach (\glob(self::FIXTURE_ROOT . "/v{$version}/{$dir}/invariant_*.json") ?: [] as $fixture) {
                     yield "v{$version}:{$dir}:" . \basename($fixture) => [$version, $eventType, $fixture];
                 }
             }
@@ -1034,6 +1076,14 @@ final class PayloadValidatorTest extends TestCase
     }
 
     // ----- helpers -------------------------------------------------
+
+    /**
+     * @return array<string,string> fixture dir => wire event type
+     */
+    private static function eventsFor(int $version): array
+    {
+        return 2 === $version ? [...self::EVENT_FOR_DIR, ...self::PURCHASE_EVENT_FOR_DIR] : self::EVENT_FOR_DIR;
+    }
 
     /**
      * @param array<string,mixed> $data
