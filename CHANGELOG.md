@@ -29,6 +29,11 @@ and this project adheres to [Semantic Versioning][semver].
   `obligation_id` / `receipt_id` rather than `event_id`, the document file as a
   signed URL into Dreamshop, and the order in which kaikei finds the supplier.
 
+  `purchase.rejected.reason` is a closed list of eleven codes, including
+  `funktionsadskillelse` (the approver holds a payment role, R5) and
+  `kategori_mangler` (reserved for documents without a purchase order), so a
+  receiver on 1.13 accepts every code kaikei's spec rejects with.
+
   Tier-3 rules: a P/F/K document's totals balance
   (`amount_net + vat_free_amount + vat_amount == amount_gross`); an EU supplier has
   a `vat_number`; a status reply names exactly one of `obligation_id` and

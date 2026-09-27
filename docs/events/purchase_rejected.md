@@ -28,6 +28,8 @@ Example: [`valid.json`](../../tests/fixtures/v2/purchase_rejected/valid.json).
 | `konto_mangler` | A line matches neither an item number nor the supplier's account rule. | kaikei's configuration |
 | `moms_uoverensstemmelse` | The VAT does not add up -- e.g. the VAT already deducted on a prepayment would be deducted again. | The document in Dreamshop |
 | `sag_mangler` | A credit note's invoice (`credits_obligation_id`) cannot be found. | The credit note in Dreamshop |
+| `kategori_mangler` | There is no category to book the expense to (R6). Reserved for documents without a purchase order (profile O), which are not in this contract yet -- present now so a receiver on 1.13 already accepts it. | The category in Dreamshop |
+| `funktionsadskillelse` | The approver (`approval.approved_by`) holds a payment role, which segregation of duties forbids (R5). | The approval in Dreamshop: another approver |
 | `faktura_ikke_bogfoert` | A goods receipt's invoice is not booked yet. | Send again once the invoice is booked |
 | `bilag_utilgaengeligt` | The document file could not be fetched, or its `sha256` did not match. | Dreamshop's document endpoint |
 | `skema_ugyldigt` | The event failed validation. | The sender |

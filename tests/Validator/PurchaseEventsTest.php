@@ -207,6 +207,36 @@ final class PurchaseEventsTest extends TestCase
         self::assertTrue($this->validator->validate($this->envelope('purchase.booked', $data))->isValid());
     }
 
+    // ----- purchase.rejected: reason ---------------------------------------
+
+    /**
+     * Every code kaikei's spec rejects with is in the closed list, so a Dreamshop
+     * on 1.13 accepts all of them.
+     *
+     * @dataProvider reasons
+     */
+    public function testEveryReasonCodeIsAccepted(string $reason): void
+    {
+        $data = $this->fixture('purchase_rejected');
+        $data['reason'] = $reason;
+
+        self::assertTrue($this->validator->validate($this->envelope('purchase.rejected', $data))->isValid(), $reason);
+    }
+
+    /**
+     * @return iterable<string,array{0:string}>
+     */
+    public static function reasons(): iterable
+    {
+        foreach ([
+            'klient_forkert', 'leverandoer_ukendt', 'leverandoer_moms_afviger', 'konto_mangler',
+            'moms_uoverensstemmelse', 'sag_mangler', 'kategori_mangler', 'funktionsadskillelse',
+            'faktura_ikke_bogfoert', 'bilag_utilgaengeligt', 'skema_ugyldigt',
+        ] as $reason) {
+            yield $reason => [$reason];
+        }
+    }
+
     // ----- providers ----------------------------------------------------
 
     /**

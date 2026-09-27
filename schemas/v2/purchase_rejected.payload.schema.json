@@ -44,6 +44,8 @@
                 "konto_mangler",
                 "moms_uoverensstemmelse",
                 "sag_mangler",
+                "kategori_mangler",
+                "funktionsadskillelse",
                 "faktura_ikke_bogfoert",
                 "bilag_utilgaengeligt",
                 "skema_ugyldigt"

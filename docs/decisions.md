@@ -284,6 +284,12 @@ would reject a real supplier, so both sides call the same function. It also drop
 dots (`BE 0123.456.789`), beyond the decision's "spaces and hyphens": that can only
 turn a false rejection into a match.
 
+**The reason codes are all of kaikei's.** `purchase.rejected.reason` is a closed
+enum, so a code added later would be refused by a Dreamshop still on the older
+package. It therefore carries every code kaikei's spec rejects with, including
+`funktionsadskillelse` (R5) and `kategori_mangler` (for profile O, which this
+contract does not carry yet).
+
 **Examples are not the confidential fixture.** The spec asked for the Montana
 proforma as the P example. This repository is public and that fixture is
 confidential (prices, discount, bank account, names), so `valid.json` has its
