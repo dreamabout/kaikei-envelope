@@ -1,0 +1,86 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://github.com/dreamabout/kaikei-envelope/schemas/v2/purchase_goods_received.payload.schema.json",
+    "title": "purchase.goods_received payload",
+    "description": "Goods received into stock against a supplier invoice, Dreamshop -> kaikei. receipt_id is the idempotency key.",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "client_id",
+        "receipt_id",
+        "invoice_obligation_id",
+        "supplier_id",
+        "received_at",
+        "lines"
+    ],
+    "properties": {
+        "client_id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The kaikei client (one kaikei deployment = one client = one e-conomic agreement). Carried in data because the envelope has additionalProperties:false. The receiver rejects a foreign client with klient_forkert."
+        },
+        "receipt_id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Dreamshop's id for the receipt. Together with the event type it is the idempotency key."
+        },
+        "invoice_obligation_id": {
+            "type": "string",
+            "minLength": 1
+        },
+        "prepayment_obligation_id": {
+            "type": "string",
+            "minLength": 1
+        },
+        "supplier_id": {
+            "type": "string",
+            "minLength": 1
+        },
+        "received_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "lines": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/line"
+            },
+            "minItems": 1
+        }
+    },
+    "$defs": {
+        "line": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "quantity",
+                "amount_dkk",
+                "stock_category"
+            ],
+            "properties": {
+                "item_number": {
+                    "type": "string",
+                    "minLength": 1
+                },
+                "quantity": {
+                    "type": "string",
+                    "pattern": "^\\d+(\\.\\d{1,3})?$",
+                    "description": "Decimal string, up to 3 places. A positive magnitude on every event type, credit notes included."
+                },
+                "amount_dkk": {
+                    "type": "string",
+                    "pattern": "^-?\\d+\\.\\d{2}$",
+                    "description": "The stock value of the line in DKK, excluding VAT."
+                },
+                "stock_category": {
+                    "type": "string",
+                    "enum": [
+                        "dk",
+                        "eu",
+                        "non_eu"
+                    ]
+                }
+            }
+        }
+    }
+}

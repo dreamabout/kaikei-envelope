@@ -29,6 +29,16 @@ final class SchemaLintTest extends TestCase
     /** Contract versions shipped side by side. */
     private const VERSIONS = ['v1', 'v2'];
 
+    private const PURCHASE_EVENT_TYPES = [
+        'purchase_prepayment_approved',
+        'purchase_invoice_approved',
+        'purchase_credit_note_approved',
+        'purchase_goods_received',
+        'purchase_prepayment_paid',
+        'purchase_booked',
+        'purchase_rejected',
+    ];
+
     /**
      * @dataProvider payloadSchemas
      */
@@ -72,13 +82,48 @@ final class SchemaLintTest extends TestCase
     }
 
     /**
+     * An `invariant_*.json` fixture breaks a rule the schema cannot express (a sum, a
+     * condition across fields). It must PASS the schema, so the rejection is known to
+     * come from the validator's third tier (PayloadValidatorTest) and not from a typo.
+     *
+     * @dataProvider invariantFixtures
+     */
+    public function testInvariantFixturePassesTheSchema(string $schemaFile, string $fixtureFile): void
+    {
+        $validator = new Validator();
+        $result    = $validator->validate($this->readJson($fixtureFile), $this->readSchema($schemaFile));
+
+        self::assertTrue(
+            $result->isValid(),
+            \sprintf('fixture %s should be schema-valid against %s', \basename($fixtureFile), \basename($schemaFile)),
+        );
+    }
+
+    /**
+     * @return iterable<string,array{0:string,1:string}>
+     */
+    public static function invariantFixtures(): iterable
+    {
+        foreach (self::VERSIONS as $version) {
+            foreach (self::eventTypes($version) as $type) {
+                foreach (\glob(self::FIXTURE_ROOT . "/{$version}/{$type}/invariant_*.json") ?: [] as $fixture) {
+                    yield "{$version}:{$type}:" . \basename($fixture) => [
+                        self::SCHEMA_ROOT . "/{$version}/{$type}.payload.schema.json",
+                        $fixture,
+                    ];
+                }
+            }
+        }
+    }
+
+    /**
      * @return iterable<string,array{0:string}>
      */
     public static function payloadSchemas(): iterable
     {
         foreach (self::VERSIONS as $version) {
             $dir = self::SCHEMA_ROOT . "/{$version}";
-            foreach (self::eventTypes() as $type) {
+            foreach (self::eventTypes($version) as $type) {
                 yield "{$version}:{$type}" => [$dir . "/{$type}.payload.schema.json"];
             }
             yield "{$version}:envelope" => [$dir . '/envelope.schema.json'];
@@ -91,7 +136,7 @@ final class SchemaLintTest extends TestCase
     public static function validFixtures(): iterable
     {
         foreach (self::VERSIONS as $version) {
-            foreach (self::eventTypes() as $type) {
+            foreach (self::eventTypes($version) as $type) {
                 yield "{$version}:{$type}" => [
                     self::SCHEMA_ROOT . "/{$version}/{$type}.payload.schema.json",
                     self::FIXTURE_ROOT . "/{$version}/{$type}/valid.json",
@@ -106,7 +151,7 @@ final class SchemaLintTest extends TestCase
     public static function invalidFixtures(): iterable
     {
         foreach (self::VERSIONS as $version) {
-            foreach (self::eventTypes() as $type) {
+            foreach (self::eventTypes($version) as $type) {
                 $dir = self::FIXTURE_ROOT . "/{$version}/{$type}";
                 foreach (\glob($dir . '/invalid_*.json') ?: [] as $fixture) {
                     yield "{$version}:{$type}:" . \basename($fixture) => [
@@ -119,11 +164,19 @@ final class SchemaLintTest extends TestCase
     }
 
     /**
+     * The purchase events (1.13.0) exist in v2 only: v1 is the frozen mirror of the
+     * contract that was deployed before them.
+     *
      * @return list<string>
      */
-    private static function eventTypes(): array
+    private static function eventTypes(string $version): array
     {
-        return ['order_shipped', 'order_captured', 'order_refunded', 'payout_paid', 'payment_prepaid', 'order_fee', 'payout_disbursed', 'account_fee'];
+        $types = ['order_shipped', 'order_captured', 'order_refunded', 'payout_paid', 'payment_prepaid', 'order_fee', 'payout_disbursed', 'account_fee'];
+        if ('v2' === $version) {
+            $types = [...$types, ...self::PURCHASE_EVENT_TYPES];
+        }
+
+        return $types;
     }
 
     private function readSchema(string $file): \stdClass

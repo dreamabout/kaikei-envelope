@@ -15,7 +15,23 @@
         "event_type": {
             "type": "string",
             "description": "One of the supported event types.",
-            "enum": ["order.shipped", "order.captured", "order.refunded", "payout.paid", "payment.prepaid", "order.fee"]
+            "enum": [
+                "order.shipped",
+                "order.captured",
+                "order.refunded",
+                "payout.paid",
+                "payment.prepaid",
+                "order.fee",
+                "payout.disbursed",
+                "account.fee",
+                "purchase.prepayment_approved",
+                "purchase.invoice_approved",
+                "purchase.credit_note_approved",
+                "purchase.goods_received",
+                "purchase.prepayment_paid",
+                "purchase.booked",
+                "purchase.rejected"
+            ]
         },
         "schema_version": {
             "type": "integer",

@@ -1,0 +1,25 @@
+# `purchase.invoice_approved`
+
+Profile **F**, Dreamshop -> kaikei. A supplier invoice was approved.
+
+Schema: [v2](../../schemas/v2/purchase_invoice_approved.payload.schema.json) (v2 only).
+Example: [`valid.json`](../../tests/fixtures/v2/purchase_invoice_approved/valid.json).
+
+## `data` fields
+
+As [`purchase.prepayment_approved`](purchase_prepayment_approved.md), except:
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `document.due_date` | string | yes | The due date on the invoice (`YYYY-MM-DD`). |
+| `offsets` | array | no | The prepayments this invoice settles. |
+
+Each `offsets[]` entry:
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `prepayment_obligation_id` | string | yes | The P obligation being settled. |
+| `amount_gross` | string | yes | The part of the prepayment settled here, incl. VAT. |
+| `vat_already_deducted` | string | yes | VAT already deducted on that prepayment, so it is not deducted twice. |
+
+Shared blocks and rules: [`purchase.md`](purchase.md).

@@ -15,9 +15,27 @@ use PHPUnit\Framework\TestCase;
  */
 final class EventTypeTest extends TestCase
 {
-    public function testEightCasesExist(): void
+    public function testFifteenCasesExist(): void
     {
-        self::assertCount(8, EventType::cases());
+        self::assertCount(15, EventType::cases());
+    }
+
+    /**
+     * @dataProvider purchaseWireStrings
+     */
+    public function testPurchaseEventsNeedSchemaVersionTwo(string $wire, EventType $type): void
+    {
+        self::assertSame(2, $type->minimumSchemaVersion());
+    }
+
+    public function testEveryOtherEventIsAvailableFromSchemaVersionOne(): void
+    {
+        foreach (EventType::cases() as $type) {
+            if (\str_starts_with($type->value, 'purchase.')) {
+                continue;
+            }
+            self::assertSame(1, $type->minimumSchemaVersion(), $type->value);
+        }
     }
 
     /**
@@ -61,5 +79,20 @@ final class EventTypeTest extends TestCase
         yield 'order.fee'       => ['order.fee',       EventType::OrderFee];
         yield 'payout.disbursed' => ['payout.disbursed', EventType::PayoutDisbursed];
         yield 'account.fee'      => ['account.fee',      EventType::AccountFee];
+        yield from self::purchaseWireStrings();
+    }
+
+    /**
+     * @return iterable<string,array{0:string,1:EventType}>
+     */
+    public static function purchaseWireStrings(): iterable
+    {
+        yield 'purchase.prepayment_approved'  => ['purchase.prepayment_approved',  EventType::PurchasePrepaymentApproved];
+        yield 'purchase.invoice_approved'     => ['purchase.invoice_approved',     EventType::PurchaseInvoiceApproved];
+        yield 'purchase.credit_note_approved' => ['purchase.credit_note_approved', EventType::PurchaseCreditNoteApproved];
+        yield 'purchase.goods_received'       => ['purchase.goods_received',       EventType::PurchaseGoodsReceived];
+        yield 'purchase.prepayment_paid'      => ['purchase.prepayment_paid',      EventType::PurchasePrepaymentPaid];
+        yield 'purchase.booked'               => ['purchase.booked',               EventType::PurchaseBooked];
+        yield 'purchase.rejected'             => ['purchase.rejected',             EventType::PurchaseRejected];
     }
 }

@@ -139,6 +139,21 @@ $envelope = Envelope::fromArray($decoded);
 | `payment.prepaid` | InvoiceIssued → prepaid branch | prepayment liability |
 | `payout.paid` | SettlementImported | payout pass |
 | `order.fee` | provider fee / chargeback against an order | fee → gateway_fee / gateway_clearing |
+| `payout.disbursed` | gateway wallet → own bank account | bank / gateway_clearing |
+| `account.fee` | standing provider account fee | fee → gateway_fee |
+
+Purchase events (v2 only, 1.13.0) -- supplier obligations, both ways. See
+[`docs/events/purchase.md`](docs/events/purchase.md).
+
+| Event type | Direction | What it says |
+|---|---|---|
+| `purchase.prepayment_approved` | Dreamshop → kaikei | profile P approved |
+| `purchase.invoice_approved` | Dreamshop → kaikei | profile F approved |
+| `purchase.credit_note_approved` | Dreamshop → kaikei | profile K approved |
+| `purchase.goods_received` | Dreamshop → kaikei | goods received into stock |
+| `purchase.prepayment_paid` | Dreamshop → kaikei | a P prepayment was paid (VAT repost date) |
+| `purchase.booked` | kaikei → Dreamshop | booked in e-conomic |
+| `purchase.rejected` | kaikei → Dreamshop | not booked, with a reason code |
 
 Field references per event live under [`docs/events/`](docs/events/).
 

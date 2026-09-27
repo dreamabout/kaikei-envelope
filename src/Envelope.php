@@ -12,6 +12,13 @@ use Dreamabout\KaikeiEnvelope\Payload\OrderShippedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\PaymentPrepaidPayload;
 use Dreamabout\KaikeiEnvelope\Payload\PayoutDisbursedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\PayoutPaidPayload;
+use Dreamabout\KaikeiEnvelope\Payload\PurchaseBookedPayload;
+use Dreamabout\KaikeiEnvelope\Payload\PurchaseCreditNoteApprovedPayload;
+use Dreamabout\KaikeiEnvelope\Payload\PurchaseGoodsReceivedPayload;
+use Dreamabout\KaikeiEnvelope\Payload\PurchaseInvoiceApprovedPayload;
+use Dreamabout\KaikeiEnvelope\Payload\PurchasePrepaymentApprovedPayload;
+use Dreamabout\KaikeiEnvelope\Payload\PurchasePrepaymentPaidPayload;
+use Dreamabout\KaikeiEnvelope\Payload\PurchaseRejectedPayload;
 
 /**
  * The v1 kaikei envelope.
@@ -83,6 +90,13 @@ final class Envelope
             EventType::OrderFee       => OrderFeePayload::fromArray($rawData),
             EventType::PayoutDisbursed => PayoutDisbursedPayload::fromArray($rawData),
             EventType::AccountFee => AccountFeePayload::fromArray($rawData),
+            EventType::PurchasePrepaymentApproved => PurchasePrepaymentApprovedPayload::fromArray($rawData),
+            EventType::PurchaseInvoiceApproved => PurchaseInvoiceApprovedPayload::fromArray($rawData),
+            EventType::PurchaseCreditNoteApproved => PurchaseCreditNoteApprovedPayload::fromArray($rawData),
+            EventType::PurchaseGoodsReceived => PurchaseGoodsReceivedPayload::fromArray($rawData),
+            EventType::PurchasePrepaymentPaid => PurchasePrepaymentPaidPayload::fromArray($rawData),
+            EventType::PurchaseBooked => PurchaseBookedPayload::fromArray($rawData),
+            EventType::PurchaseRejected => PurchaseRejectedPayload::fromArray($rawData),
         };
 
         return new self(

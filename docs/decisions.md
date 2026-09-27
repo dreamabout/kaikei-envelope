@@ -250,3 +250,49 @@ stop an accounting pipeline on a good order.
 `schema_version` bump, mirroring the `order.fee` (1.1.0) and delivery
 postal-code (1.11.0) precedents. v1 stays frozen as the faithful mirror of
 Kaikei's deployed contract, so the field is v2-only.
+
+## D8 — Purchase events ride the envelope, v2 only
+
+**Track:** Asana "Bilagsflow: kontrakten for betalingsforpligtelser mellem
+Dreamshop og kaikei" (ADR-020 in Dreamshop).
+
+**Decision:** seven `purchase.*` event types on the existing envelope, in both
+directions: five from Dreamshop (P, F, K, goods received, prepayment paid) and two
+status replies from kaikei (booked, rejected). Additive MINOR (`1.12.0` →
+`1.13.0`); no `schema_version` bump.
+
+**Why v2 only.** v1 stays frozen as the mirror of the contract deployed before
+(D6). An event type now has a minimum schema version
+(`EventType::minimumSchemaVersion()`), checked in tier 1, so a v1 envelope carrying
+a purchase event is `unknown_event_type` (400) rather than a `RuntimeException` on a
+schema file that does not exist.
+
+**Why `client_id` is in `data`.** The envelope has `additionalProperties: false`;
+a new envelope field would break every receiver on the old package.
+
+**Where the rules live.** Structure, enums and patterns in the schemas. In tier 3,
+as with the B2B customer (D4) and no-COGS lines (D6): the document balance and the
+EU-supplier VAT number (`invariant_violated`), and the conditional presence of the
+status replies' subject and `supplier_number` (`invalid_data`, like B2B). Negative
+fixtures for tier-3 rules are named `invariant_*.json`: SchemaLintTest asserts they
+PASS the schema, PayloadValidatorTest that tier 3 rejects them -- so a fixture
+cannot be rejected for the wrong reason.
+
+**Why `VatNumber` is code, not only docs.** kaikei rejects a supplier whose VAT
+number differs from e-conomic's. Two normalisations that disagree on one writing
+would reject a real supplier, so both sides call the same function. It also drops
+dots (`BE 0123.456.789`), beyond the decision's "spaces and hyphens": that can only
+turn a false rejection into a match.
+
+**The reason codes are all of kaikei's.** `purchase.rejected.reason` is a closed
+enum, so a code added later would be refused by a Dreamshop still on the older
+package. It therefore carries every code kaikei's spec rejects with, including
+`funktionsadskillelse` (R5) and `kategori_mangler` (for profile O, which this
+contract does not carry yet).
+
+**Examples are not the confidential fixture.** The spec asked for the Montana
+proforma as the P example. This repository is public and that fixture is
+confidential (prices, discount, bank account, names), so `valid.json` has its
+shape -- DKK, domestic 25 %, no due date, two lines at a 30 % discount -- with a
+made-up supplier and amounts. The real document and its payment were validated
+locally against 1.13.0 and not committed.

@@ -1,0 +1,91 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://github.com/dreamabout/kaikei-envelope/schemas/v2/purchase_booked.payload.schema.json",
+    "title": "purchase.booked payload",
+    "description": "kaikei -> Dreamshop: the source event was booked in e-conomic. Exactly one of obligation_id and receipt_id: receipt_id when source_event_type is purchase.goods_received, obligation_id otherwise (validator, tier 3). supplier_number is required for the document events (P, F, K); Dreamshop stores it on the supplier when that field is empty.",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "client_id",
+        "source_event_type",
+        "voucher_number",
+        "accounting_year",
+        "entries"
+    ],
+    "properties": {
+        "client_id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The kaikei client (one kaikei deployment = one client = one e-conomic agreement). Carried in data because the envelope has additionalProperties:false. The receiver rejects a foreign client with klient_forkert."
+        },
+        "obligation_id": {
+            "type": "string",
+            "minLength": 1
+        },
+        "receipt_id": {
+            "type": "string",
+            "minLength": 1
+        },
+        "source_event_type": {
+            "type": "string",
+            "enum": [
+                "purchase.prepayment_approved",
+                "purchase.invoice_approved",
+                "purchase.credit_note_approved",
+                "purchase.goods_received",
+                "purchase.prepayment_paid"
+            ]
+        },
+        "voucher_number": {
+            "type": "integer",
+            "minimum": 1
+        },
+        "accounting_year": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The e-conomic accounting year, as e-conomic names it (e.g. 2026 or 2025/2026)."
+        },
+        "supplier_number": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The e-conomic supplier the voucher was booked on."
+        },
+        "entries": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "$ref": "#/$defs/entry"
+            }
+        }
+    },
+    "$defs": {
+        "entry": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "account",
+                "amount",
+                "currency"
+            ],
+            "properties": {
+                "account": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "amount": {
+                    "type": "string",
+                    "pattern": "^-?\\d+\\.\\d{2}$",
+                    "description": "Signed: positive is debit, negative is credit."
+                },
+                "currency": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{3}$"
+                },
+                "vat_code": {
+                    "type": "string",
+                    "minLength": 1
+                }
+            }
+        }
+    }
+}

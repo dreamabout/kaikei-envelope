@@ -1,0 +1,83 @@
+{
+    "obligation_id": "01K6A2M4P6R8T0V2X4Z6B8D0F2",
+    "document": {
+        "number": "F-90211",
+        "date": "2026-10-20",
+        "due_date": "2026-11-03",
+        "currency": "DKK",
+        "amount_net": "9280.00",
+        "vat_amount": "2320.00",
+        "vat_free_amount": "0.00",
+        "amount_gross": "11600.00",
+        "payment_reference": "+71<000000090211+85000000<"
+    },
+    "vat_treatment": "domestic",
+    "supplier": {
+        "supplier_id": "1042",
+        "name": "Eksempel Møbler A/S",
+        "vat_number": "DK12345678",
+        "country": "DK",
+        "economic_supplier_number": 318
+    },
+    "lines": [
+        {
+            "description": "Reol 38, hvid",
+            "quantity": "1",
+            "unit_price": "6860.00",
+            "amount": "6860.00",
+            "item_number": "REOL-38",
+            "ean": "5700000000017",
+            "purchase_order_id": "PO-29800",
+            "purchase_order_line_id": "PO-29800-1"
+        },
+        {
+            "description": "Skænk 30, hvid",
+            "quantity": "1",
+            "unit_price": "2170.00",
+            "amount": "2170.00",
+            "item_number": "SKAENK-30",
+            "ean": "5700000000024",
+            "purchase_order_id": "PO-29800",
+            "purchase_order_line_id": "PO-29800-5"
+        }
+    ],
+    "fees": [
+        {
+            "label": "Fragt",
+            "amount": "250.00"
+        }
+    ],
+    "offsets": [
+        {
+            "prepayment_obligation_id": "01K63Z9W3V8Q7X1M5N2B4C6D8E",
+            "amount_gross": "11287.50",
+            "vat_already_deducted": "2257.50"
+        }
+    ],
+    "deviations": [
+        {
+            "line": 1,
+            "field": "unit_price",
+            "expected": "2100.00",
+            "found": "2170.00",
+            "amount": "70.00"
+        },
+        {
+            "field": "fees",
+            "expected": "0.00",
+            "found": "250.00",
+            "amount": "250.00"
+        }
+    ],
+    "approval": {
+        "approved_by": "indkoeb@kasasagi.dk",
+        "approved_at": "2026-10-21T08:02:00Z"
+    },
+    "document_file": {
+        "url": "https://admin.dreamshop.example/kaikei/documents/01K6A2M4P6R8T0V2X4Z6B8D0F2",
+        "sha256": "60303ae22b998861bce3b28f33eec1be758a213c86c93c076dbe9f558c11c752",
+        "mimetype": "application/pdf",
+        "filename": "faktura-F-90211.pdf",
+        "size_bytes": 201114
+    }
+}

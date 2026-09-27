@@ -13,6 +13,14 @@ use Dreamabout\KaikeiEnvelope\Payload\OrderShippedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\PaymentPrepaidPayload;
 use Dreamabout\KaikeiEnvelope\Payload\PayoutDisbursedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\PayoutPaidPayload;
+use Dreamabout\KaikeiEnvelope\Payload\PurchaseBookedPayload;
+use Dreamabout\KaikeiEnvelope\Payload\PurchaseCreditNoteApprovedPayload;
+use Dreamabout\KaikeiEnvelope\Payload\PurchaseGoodsReceivedPayload;
+use Dreamabout\KaikeiEnvelope\Payload\PurchaseInvoiceApprovedPayload;
+use Dreamabout\KaikeiEnvelope\Payload\PurchasePrepaymentApprovedPayload;
+use Dreamabout\KaikeiEnvelope\Payload\PurchasePrepaymentPaidPayload;
+use Dreamabout\KaikeiEnvelope\Payload\PurchaseRejectedPayload;
+use Dreamabout\KaikeiEnvelope\PayloadInterface;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -88,6 +96,38 @@ final class EnvelopeTest extends TestCase
             'items' => [['type' => 'digital', 'gross_amount' => '5.00', 'vat_amount' => '1.00', 'vat_rate' => '0.25']],
         ]);
         self::assertInstanceOf(PaymentPrepaidPayload::class, $env->data);
+    }
+
+    /**
+     * @dataProvider purchaseEvents
+     *
+     * @param class-string<PayloadInterface> $dto
+     */
+    public function testPurchaseEventDispatchesToCorrectPayload(EventType $type, string $dir, string $dto): void
+    {
+        $contents = \file_get_contents(__DIR__ . "/fixtures/v2/{$dir}/valid.json");
+        self::assertNotFalse($contents);
+        /** @var array<string,mixed> $data */
+        $data = \json_decode($contents, true, 512, \JSON_THROW_ON_ERROR);
+
+        $env = $this->build($type, $data);
+
+        self::assertInstanceOf($dto, $env->data);
+        self::assertSame($data, $env->toArray()['data']);
+    }
+
+    /**
+     * @return iterable<string,array{0:EventType,1:string,2:class-string<PayloadInterface>}>
+     */
+    public static function purchaseEvents(): iterable
+    {
+        yield 'prepayment_approved'  => [EventType::PurchasePrepaymentApproved, 'purchase_prepayment_approved', PurchasePrepaymentApprovedPayload::class];
+        yield 'invoice_approved'     => [EventType::PurchaseInvoiceApproved, 'purchase_invoice_approved', PurchaseInvoiceApprovedPayload::class];
+        yield 'credit_note_approved' => [EventType::PurchaseCreditNoteApproved, 'purchase_credit_note_approved', PurchaseCreditNoteApprovedPayload::class];
+        yield 'goods_received'       => [EventType::PurchaseGoodsReceived, 'purchase_goods_received', PurchaseGoodsReceivedPayload::class];
+        yield 'prepayment_paid'      => [EventType::PurchasePrepaymentPaid, 'purchase_prepayment_paid', PurchasePrepaymentPaidPayload::class];
+        yield 'booked'               => [EventType::PurchaseBooked, 'purchase_booked', PurchaseBookedPayload::class];
+        yield 'rejected'             => [EventType::PurchaseRejected, 'purchase_rejected', PurchaseRejectedPayload::class];
     }
 
     public function testRoundTripPreservesEnvelopeFieldsByteEqual(): void

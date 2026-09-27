@@ -1,0 +1,59 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://github.com/dreamabout/kaikei-envelope/schemas/v2/purchase_rejected.payload.schema.json",
+    "title": "purchase.rejected payload",
+    "description": "kaikei -> Dreamshop: the source event was not booked, and nothing was. Exactly one of obligation_id and receipt_id: receipt_id when source_event_type is purchase.goods_received, obligation_id otherwise (validator, tier 3). Dreamshop fixes the cause and sends again with the same obligation_id (or receipt_id) and a new event_id.",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "client_id",
+        "source_event_type",
+        "reason",
+        "message"
+    ],
+    "properties": {
+        "client_id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The kaikei client (one kaikei deployment = one client = one e-conomic agreement). Carried in data because the envelope has additionalProperties:false. The receiver rejects a foreign client with klient_forkert."
+        },
+        "obligation_id": {
+            "type": "string",
+            "minLength": 1
+        },
+        "receipt_id": {
+            "type": "string",
+            "minLength": 1
+        },
+        "source_event_type": {
+            "type": "string",
+            "enum": [
+                "purchase.prepayment_approved",
+                "purchase.invoice_approved",
+                "purchase.credit_note_approved",
+                "purchase.goods_received",
+                "purchase.prepayment_paid"
+            ]
+        },
+        "reason": {
+            "type": "string",
+            "enum": [
+                "klient_forkert",
+                "leverandoer_ukendt",
+                "leverandoer_moms_afviger",
+                "konto_mangler",
+                "moms_uoverensstemmelse",
+                "sag_mangler",
+                "kategori_mangler",
+                "funktionsadskillelse",
+                "faktura_ikke_bogfoert",
+                "bilag_utilgaengeligt",
+                "skema_ugyldigt"
+            ]
+        },
+        "message": {
+            "type": "string",
+            "minLength": 1
+        }
+    }
+}

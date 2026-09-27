@@ -1,0 +1,42 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://github.com/dreamabout/kaikei-envelope/schemas/v2/purchase_prepayment_paid.payload.schema.json",
+    "title": "purchase.prepayment_paid payload",
+    "description": "A profile P prepayment was paid, Dreamshop -> kaikei. Gives kaikei the payment date, on which the prepayment's VAT is reposted (A9). obligation_id is the prepayment's, and with the event type it is the idempotency key.",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "client_id",
+        "obligation_id",
+        "paid_date",
+        "amount",
+        "currency"
+    ],
+    "properties": {
+        "client_id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The kaikei client (one kaikei deployment = one client = one e-conomic agreement). Carried in data because the envelope has additionalProperties:false. The receiver rejects a foreign client with klient_forkert."
+        },
+        "obligation_id": {
+            "type": "string",
+            "minLength": 1
+        },
+        "paid_date": {
+            "type": "string",
+            "format": "date"
+        },
+        "amount": {
+            "type": "string",
+            "pattern": "^-?\\d+\\.\\d{2}$"
+        },
+        "currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$"
+        },
+        "bank_reference": {
+            "type": "string",
+            "minLength": 1
+        }
+    }
+}
