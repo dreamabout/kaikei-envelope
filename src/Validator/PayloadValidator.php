@@ -288,9 +288,9 @@ final class PayloadValidator
             // cross-field arithmetic invariant the schema can't already
             // express (amount pattern, required keys). Schema-tier only.
             EventType::PayoutDisbursed => [],
-            EventType::PurchasePrepaymentApproved,
+            EventType::PurchasePrepaymentApproved => [...$this->documentBalanceErrors($data), ...$this->documentDkkErrors($data, false), ...$this->supplierVatNumberErrors($data)],
             EventType::PurchaseInvoiceApproved,
-            EventType::PurchaseCreditNoteApproved => [...$this->documentBalanceErrors($data), ...$this->supplierVatNumberErrors($data)],
+            EventType::PurchaseCreditNoteApproved => [...$this->documentBalanceErrors($data), ...$this->documentDkkErrors($data, true), ...$this->supplierVatNumberErrors($data)],
             EventType::PurchaseBooked => [...$this->statusSubjectErrors($data), ...$this->bookedSupplierNumberErrors($data)],
             EventType::PurchaseRejected => $this->statusSubjectErrors($data),
             // Single amounts and ids: nothing the schema cannot already say.
@@ -329,6 +329,81 @@ final class PayloadValidator
         }
 
         return [];
+    }
+
+    /**
+     * The DKK amounts on a purchase document (1.14.0). Dreamshop converts, and
+     * kaikei books its numbers as sent, so transit (5510) nets to zero on both
+     * sides. A document in another currency carries its four totals in DKK and
+     * `fx_rate`, and on F and K every line its `amount_dkk`. A DKK document may
+     * leave them all out, but not half of them. Missing fields are conditional
+     * presence, so `invalid_data`; sums that do not add up are
+     * `invariant_violated`. `fx_rate` is for display and is not checked against
+     * the amounts: Dreamshop's rates are floats and cannot be carried exactly.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return list<FieldError>
+     */
+    private function documentDkkErrors(array $data, bool $linesCarryDkk): array
+    {
+        $document = (array) ($data['document'] ?? []);
+        /** @var list<array<string, mixed>> $lines */
+        $lines = $linesCarryDkk ? \array_values((array) ($data['lines'] ?? [])) : [];
+        $currency = (string) ($document['currency'] ?? '');
+        $totals = ['amount_net_dkk', 'vat_amount_dkk', 'vat_free_amount_dkk', 'amount_gross_dkk'];
+        $documentFields = [...$totals, 'fx_rate'];
+
+        $sent = \array_filter($documentFields, static fn (string $f): bool => \array_key_exists($f, $document));
+        $linesSent = \array_filter($lines, static fn (array $line): bool => \array_key_exists('amount_dkk', $line));
+        if ('DKK' === $currency && [] === $sent && [] === $linesSent) {
+            return [];
+        }
+
+        $why = 'DKK' === $currency ? 'the document carries DKK amounts' : "currency is {$currency}";
+        $errors = [];
+        foreach (\array_diff($documentFields, $sent) as $field) {
+            $errors[] = new FieldError("data.document.{$field}", 'invalid_data', "Field 'data.document.{$field}' is required when {$why}.");
+        }
+        foreach ($lines as $i => $line) {
+            if (!\array_key_exists('amount_dkk', $line)) {
+                $errors[] = new FieldError("data.lines[{$i}].amount_dkk", 'invalid_data', "Field 'data.lines[{$i}].amount_dkk' is required when {$why}.");
+            }
+        }
+        if ([] !== $errors) {
+            return $errors;
+        }
+
+        $net = (string) $document['amount_net_dkk'];
+        $vatFree = (string) $document['vat_free_amount_dkk'];
+        $vat = (string) $document['vat_amount_dkk'];
+        $gross = (string) $document['amount_gross_dkk'];
+
+        $sum = \bcadd(\bcadd($net, $vatFree, 2), $vat, 2);
+        if (0 !== \bccomp($sum, $gross, 2)) {
+            $errors[] = new FieldError(
+                'data.document.amount_gross_dkk',
+                'invariant_violated',
+                "amount_net_dkk ({$net}) + vat_free_amount_dkk ({$vatFree}) + vat_amount_dkk ({$vat}) = {$sum}, not amount_gross_dkk ({$gross}).",
+            );
+        }
+
+        if ([] !== $lines) {
+            $linesSum = '0.00';
+            foreach ($lines as $line) {
+                $linesSum = \bcadd($linesSum, (string) $line['amount_dkk'], 2);
+            }
+            $expected = \bcadd($net, $vatFree, 2);
+            if (0 !== \bccomp($linesSum, $expected, 2)) {
+                $errors[] = new FieldError(
+                    'data.lines',
+                    'invariant_violated',
+                    "sum(lines[].amount_dkk) = {$linesSum}, not amount_net_dkk + vat_free_amount_dkk ({$expected}).",
+                );
+            }
+        }
+
+        return $errors;
     }
 
     /**

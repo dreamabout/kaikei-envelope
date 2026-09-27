@@ -71,6 +71,9 @@ final class PayloadValidatorTest extends TestCase
         foreach ([1, 2] as $version) {
             foreach (self::eventsFor($version) as $dir => $eventType) {
                 yield "v{$version}:{$dir}" => [$version, $eventType, self::FIXTURE_ROOT . "/v{$version}/{$dir}/valid.json"];
+                foreach (\glob(self::FIXTURE_ROOT . "/v{$version}/{$dir}/valid_*.json") ?: [] as $fixture) {
+                    yield "v{$version}:{$dir}:" . \basename($fixture) => [$version, $eventType, $fixture];
+                }
             }
         }
     }

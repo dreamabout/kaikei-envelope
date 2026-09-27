@@ -3,7 +3,9 @@
 Profile **F**, Dreamshop -> kaikei. A supplier invoice was approved.
 
 Schema: [v2](../../schemas/v2/purchase_invoice_approved.payload.schema.json) (v2 only).
-Example: [`valid.json`](../../tests/fixtures/v2/purchase_invoice_approved/valid.json).
+Examples: [`valid.json`](../../tests/fixtures/v2/purchase_invoice_approved/valid.json) (DKK) and
+[`valid_eur.json`](../../tests/fixtures/v2/purchase_invoice_approved/valid_eur.json) (EUR, a fee
+and three lines, each with its landed cost in DKK).
 
 ## `data` fields
 
@@ -13,6 +15,7 @@ As [`purchase.prepayment_approved`](purchase_prepayment_approved.md), except:
 |---|---|---|---|
 | `document.due_date` | string | yes | The due date on the invoice (`YYYY-MM-DD`). |
 | `offsets` | array | no | The prepayments this invoice settles. |
+| `lines[].amount_dkk` | string | in another currency than DKK | The line's landed cost in DKK, fee share included. The lines sum to `amount_net_dkk + vat_free_amount_dkk`. |
 
 Each `offsets[]` entry:
 

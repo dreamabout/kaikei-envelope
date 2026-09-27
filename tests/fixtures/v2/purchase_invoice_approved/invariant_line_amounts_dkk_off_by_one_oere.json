@@ -1,0 +1,70 @@
+{
+    "client_id": "kasasagi",
+    "obligation_id": "01K6G2D4F6H8K0M2P4R6T8V0X2",
+    "document": {
+        "number": "RE-2026-10877",
+        "date": "2026-10-22",
+        "due_date": "2026-11-21",
+        "currency": "EUR",
+        "amount_net": "2519.53",
+        "vat_amount": "0.00",
+        "vat_free_amount": "0.00",
+        "amount_gross": "2519.53",
+        "amount_net_dkk": "18792.49",
+        "vat_amount_dkk": "0.00",
+        "vat_free_amount_dkk": "0.00",
+        "amount_gross_dkk": "18792.49",
+        "fx_rate": "745.87"
+    },
+    "vat_treatment": "eu_reverse_charge",
+    "supplier": {
+        "supplier_id": "2077",
+        "name": "Beispiel Leuchten GmbH",
+        "vat_number": "DE123456789",
+        "country": "DE",
+        "economic_supplier_number": 415
+    },
+    "lines": [
+        {
+            "description": "Pendel 12, messing",
+            "quantity": "2",
+            "unit_price": "450.00",
+            "amount": "900.00",
+            "amount_dkk": "6947.23",
+            "item_number": "LAMPE-12"
+        },
+        {
+            "description": "Gulvlampe 3, sort",
+            "quantity": "1",
+            "unit_price": "1234.56",
+            "amount": "1234.56",
+            "amount_dkk": "9529.75",
+            "item_number": "LAMPE-3"
+        },
+        {
+            "description": "Leuchtmittel E27",
+            "quantity": "3",
+            "unit_price": "99.99",
+            "amount": "299.97",
+            "amount_dkk": "2315.52",
+            "item_number": "PAERE-E27"
+        }
+    ],
+    "fees": [
+        {
+            "label": "Fracht",
+            "amount": "85.00"
+        }
+    ],
+    "approval": {
+        "approved_by": "indkoeb@kasasagi.dk",
+        "approved_at": "2026-10-23T09:30:00Z"
+    },
+    "document_file": {
+        "url": "https://admin.dreamshop.example/kaikei/documents/01K6G2D4F6H8K0M2P4R6T8V0X2",
+        "sha256": "fcde2b2edba56bf408601fb721fe9b5c338d10ee429ea04fae5511b68fbf8fb9",
+        "mimetype": "application/pdf",
+        "filename": "rechnung-RE-2026-10877.pdf",
+        "size_bytes": 96412
+    }
+}
