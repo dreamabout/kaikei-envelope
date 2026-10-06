@@ -142,6 +142,7 @@ $envelope = Envelope::fromArray($decoded);
 | `payout.disbursed` | gateway wallet → own bank account | bank / gateway_clearing |
 | `account.fee` | standing provider account fee | fee → gateway_fee |
 | `payout.amended` (v2 only) | a reported payout gained transactions | re-reconcile; book any fee difference |
+| `order.charge_added` (v2 only) | a charge after shipping, e.g. a payment fee paid by link | supplementary invoice voucher |
 
 Purchase events (v2 only, 1.13.0) -- supplier obligations, both ways. See
 [`docs/events/purchase.md`](docs/events/purchase.md).

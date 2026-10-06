@@ -1,0 +1,10 @@
+{
+    "order_id": "O-100",
+    "invoice_number": "INV-2026-0043",
+    "customer": { "country_code": "SE", "is_b2b": false },
+    "items": [
+        { "type": "shipping", "gross_amount": "62.50", "vat_amount": "12.50", "vat_rate": "0.25" }
+    ],
+    "currency": "EUR",
+    "fx_rate": "7.46"
+}

@@ -25,6 +25,7 @@
                 "payout.disbursed",
                 "account.fee",
                 "payout.amended",
+                "order.charge_added",
                 "purchase.prepayment_approved",
                 "purchase.invoice_approved",
                 "purchase.credit_note_approved",

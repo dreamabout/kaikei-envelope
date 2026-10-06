@@ -8,6 +8,7 @@ use Dreamabout\KaikeiEnvelope\Envelope;
 use Dreamabout\KaikeiEnvelope\EventType;
 use Dreamabout\KaikeiEnvelope\Payload\AccountFeePayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderCapturedPayload;
+use Dreamabout\KaikeiEnvelope\Payload\OrderChargeAddedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderRefundedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderShippedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\PaymentPrepaidPayload;
@@ -79,6 +80,16 @@ final class EnvelopeTest extends TestCase
             'paid_at' => '2026-06-14T00:00:00Z',
         ]);
         self::assertInstanceOf(PayoutAmendedPayload::class, $env->data);
+    }
+
+    public function testOrderChargeAddedDispatchesToCorrectPayload(): void
+    {
+        $env = $this->build(EventType::OrderChargeAdded, [
+            'order_id' => 'O-1', 'invoice_number' => 'INV-2',
+            'customer' => ['country_code' => 'DK', 'is_b2b' => false],
+            'items' => [['type' => 'fee', 'gross_amount' => '25.00', 'vat_amount' => '5.00', 'vat_rate' => '0.25']],
+        ]);
+        self::assertInstanceOf(OrderChargeAddedPayload::class, $env->data);
     }
 
     public function testPayoutDisbursedDispatchesToCorrectPayload(): void

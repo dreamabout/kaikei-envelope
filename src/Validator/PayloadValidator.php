@@ -275,7 +275,10 @@ final class PayloadValidator
     private function checkInvariants(EventType $eventType, array $data): array
     {
         return match ($eventType) {
-            EventType::OrderShipped => [...$this->b2bCustomerErrors($data), ...$this->itemLineErrors($data), ...$this->noCogsItemErrors($data), ...$this->deliveryPostalCodeErrors($data)],
+            EventType::OrderShipped,
+            // order.charge_added is a supplementary sales invoice with order.shipped's
+            // customer and item shapes, so the same four rules hold for it.
+            EventType::OrderChargeAdded => [...$this->b2bCustomerErrors($data), ...$this->itemLineErrors($data), ...$this->noCogsItemErrors($data), ...$this->deliveryPostalCodeErrors($data)],
             EventType::PaymentPrepaid => [...$this->itemLineErrors($data), ...$this->noCogsItemErrors($data), ...$this->settlementBlockErrors($data), ...$this->deliveryPostalCodeErrors($data)],
             EventType::OrderRefunded => [...$this->refundErrors($data), ...$this->noCogsItemErrors($data), ...$this->deliveryPostalCodeErrors($data)],
             EventType::PayoutPaid,
