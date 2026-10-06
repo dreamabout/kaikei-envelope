@@ -11,6 +11,7 @@ use Dreamabout\KaikeiEnvelope\Payload\OrderCapturedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderRefundedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderShippedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\PaymentPrepaidPayload;
+use Dreamabout\KaikeiEnvelope\Payload\PayoutAmendedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\PayoutDisbursedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\PayoutPaidPayload;
 use Dreamabout\KaikeiEnvelope\Payload\PurchaseBookedPayload;
@@ -68,6 +69,16 @@ final class EnvelopeTest extends TestCase
             'paid_at' => '2026-06-14T00:00:00Z',
         ]);
         self::assertInstanceOf(PayoutPaidPayload::class, $env->data);
+    }
+
+    public function testPayoutAmendedDispatchesToCorrectPayload(): void
+    {
+        $env = $this->build(EventType::PayoutAmended, [
+            'payout_id' => 'po', 'gateway' => 'r', 'transaction_ids' => ['t1', 't2'],
+            'gross_amount' => '20.00', 'fee_amount' => '0.00', 'net_amount' => '20.00',
+            'paid_at' => '2026-06-14T00:00:00Z',
+        ]);
+        self::assertInstanceOf(PayoutAmendedPayload::class, $env->data);
     }
 
     public function testPayoutDisbursedDispatchesToCorrectPayload(): void

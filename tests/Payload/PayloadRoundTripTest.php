@@ -10,6 +10,7 @@ use Dreamabout\KaikeiEnvelope\Payload\OrderFeePayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderRefundedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderShippedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\PaymentPrepaidPayload;
+use Dreamabout\KaikeiEnvelope\Payload\PayoutAmendedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\PayoutDisbursedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\PayoutPaidPayload;
 use PHPUnit\Framework\TestCase;
@@ -246,6 +247,25 @@ final class PayloadRoundTripTest extends TestCase
         ];
 
         $out = PayoutPaidPayload::fromArray($in)->toArray();
+        self::assertSame($in, $out);
+    }
+
+    public function testPayoutAmendedRoundTrip(): void
+    {
+        $in = [
+            'payout_id'         => 'po_xyz789',
+            'gateway'           => 'costplus',
+            'transaction_ids'   => ['tx_001', 'tx_002', 'tx_003', 'tx_004'],
+            'gross_amount'      => '1200.00',
+            'fee_amount'        => '18.00',
+            'net_amount'        => '1182.00',
+            'paid_at'           => '2026-06-14T08:00:00Z',
+            'currency'          => 'EUR',
+            'fx_rate'           => '7.45',
+            'payout_fee_amount' => '2.00',
+        ];
+
+        $out = PayoutAmendedPayload::fromArray($in)->toArray();
         self::assertSame($in, $out);
     }
 

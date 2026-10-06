@@ -1,0 +1,10 @@
+{
+    "payout_id": "po_xyz789",
+    "gateway": "costplus",
+    "transaction_ids": ["tx_001", "tx_002", "tx_003", "tx_004"],
+    "gross_amount": "1200.00",
+    "fee_amount": "18.00",
+    "net_amount": "1182.00",
+    "paid_at": "2026-06-14T08:00:00Z",
+    "currency": "DKK"
+}

@@ -15,9 +15,9 @@ use PHPUnit\Framework\TestCase;
  */
 final class EventTypeTest extends TestCase
 {
-    public function testFifteenCasesExist(): void
+    public function testSixteenCasesExist(): void
     {
-        self::assertCount(15, EventType::cases());
+        self::assertCount(16, EventType::cases());
     }
 
     /**
@@ -31,7 +31,7 @@ final class EventTypeTest extends TestCase
     public function testEveryOtherEventIsAvailableFromSchemaVersionOne(): void
     {
         foreach (EventType::cases() as $type) {
-            if (\str_starts_with($type->value, 'purchase.')) {
+            if (\str_starts_with($type->value, 'purchase.') || EventType::PayoutAmended === $type) {
                 continue;
             }
             self::assertSame(1, $type->minimumSchemaVersion(), $type->value);
@@ -60,6 +60,15 @@ final class EventTypeTest extends TestCase
         self::assertSame(EventType::PayoutDisbursed, EventType::tryFromString('payout.disbursed'));
     }
 
+    /**
+     * payout.amended (1.15.0) is v2 only, like the purchase events: v1 is frozen.
+     */
+    public function testPayoutAmendedNeedsSchemaVersionTwo(): void
+    {
+        self::assertSame('payout.amended', EventType::PayoutAmended->value);
+        self::assertSame(2, EventType::PayoutAmended->minimumSchemaVersion());
+    }
+
     public function testAccountFeeCaseMapsToWireString(): void
     {
         self::assertSame('account.fee', EventType::AccountFee->value);
@@ -79,6 +88,7 @@ final class EventTypeTest extends TestCase
         yield 'order.fee'       => ['order.fee',       EventType::OrderFee];
         yield 'payout.disbursed' => ['payout.disbursed', EventType::PayoutDisbursed];
         yield 'account.fee'      => ['account.fee',      EventType::AccountFee];
+        yield 'payout.amended'   => ['payout.amended',   EventType::PayoutAmended];
         yield from self::purchaseWireStrings();
     }
 
