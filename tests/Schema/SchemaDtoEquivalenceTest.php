@@ -12,6 +12,7 @@ use Dreamabout\KaikeiEnvelope\Payload\OrderFeePayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderRefundedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderShippedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\PaymentPrepaidPayload;
+use Dreamabout\KaikeiEnvelope\Payload\PayoutAmendedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\PayoutDisbursedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\PayoutPaidPayload;
 use Dreamabout\KaikeiEnvelope\Payload\PurchaseBookedPayload;
@@ -129,6 +130,7 @@ final class SchemaDtoEquivalenceTest extends TestCase
         yield 'order.fee'       => [self::SCHEMA_DIR . '/order_fee.payload.schema.json', OrderFeePayload::class];
         yield 'payout.disbursed' => [self::SCHEMA_DIR . '/payout_disbursed.payload.schema.json', PayoutDisbursedPayload::class];
         yield 'account.fee'     => [self::SCHEMA_DIR . '/account_fee.payload.schema.json', AccountFeePayload::class];
+        yield 'payout.amended'  => [self::SCHEMA_DIR . '/payout_amended.payload.schema.json', PayoutAmendedPayload::class];
         yield 'purchase.prepayment_approved'  => [self::SCHEMA_DIR . '/purchase_prepayment_approved.payload.schema.json', PurchasePrepaymentApprovedPayload::class];
         yield 'purchase.invoice_approved'     => [self::SCHEMA_DIR . '/purchase_invoice_approved.payload.schema.json', PurchaseInvoiceApprovedPayload::class];
         yield 'purchase.credit_note_approved' => [self::SCHEMA_DIR . '/purchase_credit_note_approved.payload.schema.json', PurchaseCreditNoteApprovedPayload::class];

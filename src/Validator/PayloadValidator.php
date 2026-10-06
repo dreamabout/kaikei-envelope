@@ -278,7 +278,10 @@ final class PayloadValidator
             EventType::OrderShipped => [...$this->b2bCustomerErrors($data), ...$this->itemLineErrors($data), ...$this->noCogsItemErrors($data), ...$this->deliveryPostalCodeErrors($data)],
             EventType::PaymentPrepaid => [...$this->itemLineErrors($data), ...$this->noCogsItemErrors($data), ...$this->settlementBlockErrors($data), ...$this->deliveryPostalCodeErrors($data)],
             EventType::OrderRefunded => [...$this->refundErrors($data), ...$this->noCogsItemErrors($data), ...$this->deliveryPostalCodeErrors($data)],
-            EventType::PayoutPaid => $this->payoutErrors($data),
+            EventType::PayoutPaid,
+            // payout.amended carries the payout's full new state, so the same
+            // arithmetic holds for it as for payout.paid.
+            EventType::PayoutAmended => $this->payoutErrors($data),
             EventType::OrderFee => $this->feeErrors($data),
             // account.fee reuses order.fee's positive-amount invariant (the
             // shop-level account fee must be a positive magnitude).

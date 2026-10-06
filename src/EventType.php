@@ -32,6 +32,11 @@ namespace Dreamabout\KaikeiEnvelope;
  * two status replies from kaikei (`purchase.booked`, `purchase.rejected`),
  * on the same envelope and signature. Additive, v2 only: see
  * {@see minimumSchemaVersion()}. See docs/events/purchase.md.
+ *
+ * `payout.amended` (added 1.15.0) is additive, v2 only: a payout already
+ * reported by `payout.paid` gained transactions. Same fields as
+ * `payout.paid`, carrying the payout's full new state. See
+ * docs/events/payout_amended.md.
  */
 enum EventType: string
 {
@@ -43,6 +48,7 @@ enum EventType: string
     case OrderFee       = 'order.fee';
     case PayoutDisbursed = 'payout.disbursed';
     case AccountFee      = 'account.fee';
+    case PayoutAmended   = 'payout.amended';
 
     case PurchasePrepaymentApproved = 'purchase.prepayment_approved';
     case PurchaseInvoiceApproved    = 'purchase.invoice_approved';
@@ -66,7 +72,7 @@ enum EventType: string
     /**
      * The first `schema_version` that carries this event type. v1 is frozen
      * as the mirror of the contract deployed before the purchase events, so
-     * they exist from v2; the receiver answers a v1 envelope carrying one
+     * they and `payout.amended` exist from v2; the receiver answers a v1 envelope carrying one
      * with `unknown_event_type`.
      */
     public function minimumSchemaVersion(): int
@@ -78,7 +84,8 @@ enum EventType: string
             self::PurchaseGoodsReceived,
             self::PurchasePrepaymentPaid,
             self::PurchaseBooked,
-            self::PurchaseRejected => 2,
+            self::PurchaseRejected,
+            self::PayoutAmended => 2,
             default => 1,
         };
     }

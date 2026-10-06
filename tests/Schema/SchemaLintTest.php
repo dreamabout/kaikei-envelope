@@ -170,7 +170,7 @@ final class SchemaLintTest extends TestCase
     }
 
     /**
-     * The purchase events (1.13.0) exist in v2 only: v1 is the frozen mirror of the
+     * The purchase events (1.13.0) and payout.amended (1.15.0) exist in v2 only: v1 is the frozen mirror of the
      * contract that was deployed before them.
      *
      * @return list<string>
@@ -179,7 +179,7 @@ final class SchemaLintTest extends TestCase
     {
         $types = ['order_shipped', 'order_captured', 'order_refunded', 'payout_paid', 'payment_prepaid', 'order_fee', 'payout_disbursed', 'account_fee'];
         if ('v2' === $version) {
-            $types = [...$types, ...self::PURCHASE_EVENT_TYPES];
+            $types = [...$types, 'payout_amended', ...self::PURCHASE_EVENT_TYPES];
         }
 
         return $types;

@@ -9,7 +9,29 @@ and this project adheres to [Semantic Versioning][semver].
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.14.0...HEAD
+[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.15.0...HEAD
+
+## [1.15.0] - 2026-10-06
+
+### Added
+
+- **`payout.amended`** (v2 only): a payout already reported by `payout.paid` gained
+  transactions afterwards. Without it the producer had no way to report the change:
+  the receiver deduplicates on `event_id`, so the original `payout.paid` is never
+  re-read, and the new transactions were never reconciled.
+
+  Same fields and invariants as `payout.paid`, carrying the payout's **full new
+  state**: `transaction_ids` is the complete list and `fee_amount` the complete fee,
+  never a delta. The receiver works out what changed. Removing transactions is out
+  of scope. v1 answers it with `unknown_event_type`, like the purchase events.
+
+  New: `EventType::PayoutAmended`, `Payload\PayoutAmendedPayload`,
+  `schemas/v2/payout_amended.payload.schema.json`, fixtures and
+  `docs/events/payout_amended.md`.
+
+  The receiver must run 1.15 before the producer sends it.
+
+[1.15.0]: https://github.com/dreamabout/kaikei-envelope/compare/v1.14.0...v1.15.0
 
 ## [1.14.0] - 2026-09-28
 

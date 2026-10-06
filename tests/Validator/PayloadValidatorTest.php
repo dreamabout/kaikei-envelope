@@ -32,6 +32,11 @@ final class PayloadValidatorTest extends TestCase
     ];
 
     /** v2 only: v1 is the frozen mirror of the contract deployed before them. */
+    private const V2_EVENT_FOR_DIR = [
+        'payout_amended' => 'payout.amended',
+    ];
+
+    /** v2 only: v1 is the frozen mirror of the contract deployed before them. */
     private const PURCHASE_EVENT_FOR_DIR = [
         'purchase_prepayment_approved'  => 'purchase.prepayment_approved',
         'purchase_invoice_approved'     => 'purchase.invoice_approved',
@@ -190,6 +195,21 @@ final class PayloadValidatorTest extends TestCase
 
         $result = $this->validator->validate($envelope);
 
+        self::assertSame('unknown_event_type', $this->firstError($result)->code);
+        self::assertSame('event_type', $this->firstError($result)->field);
+    }
+
+    /**
+     * payout.amended exists from v2 only. A v1 envelope carrying one is an unknown
+     * event type for that version, not a crash on a schema file that does not exist.
+     */
+    public function testPayoutAmendedInAVersionOneEnvelopeIsAnUnknownEventType(): void
+    {
+        $data = $this->json(self::FIXTURE_ROOT . '/v2/payout_amended/valid.json');
+
+        $result = $this->validator->validate($this->envelope(1, 'payout.amended', $data));
+
+        self::assertSame(ValidationResult::HTTP_BAD_REQUEST, $result->httpStatus);
         self::assertSame('unknown_event_type', $this->firstError($result)->code);
         self::assertSame('event_type', $this->firstError($result)->field);
     }
@@ -1085,7 +1105,7 @@ final class PayloadValidatorTest extends TestCase
      */
     private static function eventsFor(int $version): array
     {
-        return 2 === $version ? [...self::EVENT_FOR_DIR, ...self::PURCHASE_EVENT_FOR_DIR] : self::EVENT_FOR_DIR;
+        return 2 === $version ? [...self::EVENT_FOR_DIR, ...self::V2_EVENT_FOR_DIR, ...self::PURCHASE_EVENT_FOR_DIR] : self::EVENT_FOR_DIR;
     }
 
     /**
