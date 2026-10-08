@@ -14,7 +14,7 @@ Schemas:
 | `order_id` | string | yes | Producer order identifier. |
 | `reason` | string | yes | `customer_request | chargeback | merchant_initiated | other`. |
 | `items` | array | yes | Non-empty; refunded lines carry **negative** `gross_amount`/`vat_amount`. Optional per-item `unit_cost` (positive DKK cost of one unit, `^\d+\.\d{2}$`) + `quantity` reverse the cost-of-goods booking — the receiver restocks inventory at `unit_cost × quantity`. Omit → no cost reversal. Added in schema **v1.2.0**. |
-| `refund_payments` | array | yes | Non-empty; each `{gateway, original_transaction_id, refund_transaction_id, amount}`. |
+| `refund_payments` | array | yes | Non-empty; each `{gateway, original_transaction_id, refund_transaction_id, amount}`. `gateway` uses the same accounting slugs as `order.shipped`'s `payments[]`; a refund back onto a gift card is `gift_card`, the name the receiver posts to the gift-card liability on. |
 | `currency` | string | no | ISO 4217. |
 | `fx_rate` (v2) / `fx_rate_to_dkk` (v1) | string | no | Positive decimal rate to DKK. |
 | `prepayment_event_id` | string | no | ULID linking back to a prior `payment.prepaid`. |

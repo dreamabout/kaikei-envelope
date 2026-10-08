@@ -44,8 +44,8 @@ final class ShippedPaymentLegsTest extends TestCase
         // The whole reason this is an array.
         $data             = $this->shipmentData();
         $data['payments'] = [
-            ['gateway' => 'stripe',   'transaction_id' => 'pi_1', 'amount' => '130.00'],
-            ['gateway' => 'giftcard', 'amount' => '50.00'],
+            ['gateway' => 'stripe',    'transaction_id' => 'pi_1', 'amount' => '130.00'],
+            ['gateway' => 'gift_card', 'amount' => '50.00'],
         ];
 
         self::assertTrue($this->validate($data)->isValid(), 'gift card plus card must be expressible');
@@ -57,7 +57,7 @@ final class ShippedPaymentLegsTest extends TestCase
         // reference. Requiring one would only produce placeholder values --
         // the "unknown" problem the refund legs already have.
         $data             = $this->shipmentData();
-        $data['payments'] = [['gateway' => 'giftcard', 'amount' => '50.00']];
+        $data['payments'] = [['gateway' => 'gift_card', 'amount' => '50.00']];
 
         self::assertTrue($this->validate($data)->isValid());
     }

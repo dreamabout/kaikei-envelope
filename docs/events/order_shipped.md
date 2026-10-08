@@ -76,7 +76,7 @@ The B2B-conditional requirements are enforced by `PayloadValidator`
         "invoice_number": "INV-2026-0001",
         "payments": [
             { "gateway": "stripe", "transaction_id": "pi_3Pq...", "amount": "130.00" },
-            { "gateway": "giftcard", "amount": "50.00" }
+            { "gateway": "gift_card", "amount": "50.00" }
         ]
     }
 }
@@ -90,7 +90,7 @@ reach the method through the cash-in leg on the same `order_id`.
 
 | Field | Type | Required | Notes |
 |---|---|---|---|
-| `gateway` | string | yes | Payment method as the accounting slug — the same vocabulary `payment.prepaid` and `order.captured` use, so a split method resolves to the same account on every leg. |
+| `gateway` | string | yes | Payment method as the accounting slug — the same vocabulary `payment.prepaid` and `order.captured` use, so a split method resolves to the same account on every leg. A gift card is `gift_card` (with the underscore): that is the name the receiver posts to the gift-card liability on. Any other spelling, `giftcard` included, falls through to the suspense account. |
 | `amount` | string | yes | Amount taken on this leg, in the document currency. 2-decimal (`^-?\d+\.\d{2}$`). |
 | `transaction_id` | string | no | Gateway-side reference, when one exists. |
 
