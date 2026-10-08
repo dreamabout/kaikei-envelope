@@ -9,7 +9,34 @@ and this project adheres to [Semantic Versioning][semver].
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.16.0...HEAD
+[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.17.0...HEAD
+
+## [1.17.0] - 2026-10-09
+
+### Added
+
+- **`order.shipped.payment_terms`** (v2 only): `{days, due_date}`, both required,
+  `days` an integer from 0 to 120 and `due_date` an ISO date. It says the sale is
+  invoiced on credit, so the receiver issues the invoice with a payment term.
+  `customer.is_b2b` cannot say that: it is also set on card-paid EU sales with a VAT
+  exemption. `due_date` is the date the producer set, so the two sides cannot
+  disagree on it. Tier 3: requires `customer.is_b2b = true` and a
+  `customer.vat_number`, otherwise `invariant_violated` on `data.payment_terms`.
+- **`order.refunded.unpaid`** (v2 only): a credit note on an order that was never
+  paid. It closes the receivable and moves no money, so `refund_payments` must be
+  empty and the sum invariant is skipped. Without the flag, or with `false`, the
+  rules are unchanged: an empty `refund_payments` is still rejected. Tier 3:
+  `unpaid` together with `prepayment_event_id` is `invariant_violated` on
+  `data.unpaid`.
+
+  New: `OrderShippedPayload::$paymentTerms` and `OrderRefundedPayload::$unpaid`,
+  both appended as the last constructor parameter. Fixtures and
+  `docs/events/order_shipped.md` / `order_refunded.md`. v1 is unchanged.
+
+  The receiver must run 1.17 before the producer sends either field: an older
+  receiver rejects the unknown key and the empty `refund_payments`.
+
+[1.17.0]: https://github.com/dreamabout/kaikei-envelope/compare/v1.16.0...v1.17.0
 
 ## [1.16.0] - 2026-10-07
 

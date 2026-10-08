@@ -29,7 +29,9 @@ use Opis\JsonSchema\Validator;
  * (faithful mirror of Kaikei's current wire contract), 2 ->
  * schemas/v2 (the cleaner forward contract). The cross-field rules
  * are identical across versions (same business invariants); only the
- * structural strictness differs, and that lives in the schemas.
+ * structural strictness differs, and that lives in the schemas. The
+ * exception is rules on v2-only fields (payment_terms, unpaid), which
+ * do not apply to v1.
  *
  * See docs/decisions.md D4 for the full rule mapping.
  */
@@ -100,7 +102,7 @@ final class PayloadValidator
             return ValidationResult::errors($dataErrors, ValidationResult::HTTP_UNPROCESSABLE);
         }
 
-        $invariantErrors = $this->checkInvariants($eventType, $data);
+        $invariantErrors = $this->checkInvariants($version, $eventType, $data);
         if ([] !== $invariantErrors) {
             return ValidationResult::errors($invariantErrors, ValidationResult::HTTP_UNPROCESSABLE);
         }
@@ -272,15 +274,15 @@ final class PayloadValidator
      *
      * @return list<FieldError>
      */
-    private function checkInvariants(EventType $eventType, array $data): array
+    private function checkInvariants(int $version, EventType $eventType, array $data): array
     {
         return match ($eventType) {
-            EventType::OrderShipped,
+            EventType::OrderShipped => [...$this->b2bCustomerErrors($data), ...$this->itemLineErrors($data), ...$this->noCogsItemErrors($data), ...$this->deliveryPostalCodeErrors($data), ...$this->paymentTermsErrors($version, $data)],
             // order.charge_added is a supplementary sales invoice with order.shipped's
             // customer and item shapes, so the same four rules hold for it.
             EventType::OrderChargeAdded => [...$this->b2bCustomerErrors($data), ...$this->itemLineErrors($data), ...$this->noCogsItemErrors($data), ...$this->deliveryPostalCodeErrors($data)],
             EventType::PaymentPrepaid => [...$this->itemLineErrors($data), ...$this->noCogsItemErrors($data), ...$this->settlementBlockErrors($data), ...$this->deliveryPostalCodeErrors($data)],
-            EventType::OrderRefunded => [...$this->refundErrors($data), ...$this->noCogsItemErrors($data), ...$this->deliveryPostalCodeErrors($data)],
+            EventType::OrderRefunded => [...$this->refundErrors($version, $data), ...$this->noCogsItemErrors($data), ...$this->deliveryPostalCodeErrors($data)],
             EventType::PayoutPaid,
             // payout.amended carries the payout's full new state, so the same
             // arithmetic holds for it as for payout.paid.
@@ -573,12 +575,26 @@ final class PayloadValidator
      * Refund payment amounts must be positive, and their sum must equal
      * the negated sum of the (negative) refunded item gross amounts.
      *
+     * An unpaid credit note (v2, 1.17.0) moves no money: the schema has already
+     * required its refund_payments to be empty, so there is no sum to check. It
+     * cannot reverse a prepaid order, because a prepayment is paid by definition.
+     * v1 does not know the flag and is lenient on unknown keys, so there it
+     * changes nothing.
+     *
      * @param array<string, mixed> $data
      *
      * @return list<FieldError>
      */
-    private function refundErrors(array $data): array
+    private function refundErrors(int $version, array $data): array
     {
+        if ($version >= 2 && true === ($data['unpaid'] ?? null)) {
+            if (\array_key_exists('prepayment_event_id', $data)) {
+                return [new FieldError('data.unpaid', 'invariant_violated', 'An unpaid credit note cannot reference a prepayment: a prepaid order has been paid.')];
+            }
+
+            return [];
+        }
+
         $errors = [];
         /** @var list<mixed> $refundPayments */
         $refundPayments = \is_array($data['refund_payments'] ?? null) ? \array_values($data['refund_payments']) : [];
@@ -945,6 +961,30 @@ final class PayloadValidator
         }
 
         return $errors;
+    }
+
+    /**
+     * payment_terms (v2, 1.17.0) makes order.shipped an invoice on credit, which
+     * is only issued to a business: the customer must be B2B and carry a VAT
+     * number. v1 does not know the field and is lenient on unknown keys, so there
+     * it changes nothing.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return list<FieldError>
+     */
+    private function paymentTermsErrors(int $version, array $data): array
+    {
+        if ($version < 2 || !\array_key_exists('payment_terms', $data)) {
+            return [];
+        }
+
+        $customer = \is_array($data['customer'] ?? null) ? $data['customer'] : [];
+        if (true !== ($customer['is_b2b'] ?? null) || !\is_string($customer['vat_number'] ?? null)) {
+            return [new FieldError('data.payment_terms', 'invariant_violated', 'payment_terms requires a B2B customer (customer.is_b2b = true) with a customer.vat_number.')];
+        }
+
+        return [];
     }
 
     // ----- helpers -------------------------------------------------

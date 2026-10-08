@@ -19,7 +19,7 @@ namespace Dreamabout\KaikeiEnvelope;
  */
 final class Version
 {
-    public const PACKAGE_VERSION = '1.16.0';
+    public const PACKAGE_VERSION = '1.17.0';
     public const SCHEMA_VERSION  = 2;
 
     private function __construct()

@@ -48,6 +48,9 @@
         "$ref": "#/$defs/payment"
       },
       "description": "How the sale was paid, one entry per payment method. An array because an order can be split across methods (gift card plus card), which a single gateway field cannot express -- the same reason order.refunded uses refund_payments[]. Optional and additive: producers that omit it stay valid, and the receiver can still resolve the method from the cash-in leg (payment.prepaid / order.captured) by order_id."
+    },
+    "payment_terms": {
+      "$ref": "#/$defs/payment_terms"
     }
   },
   "$defs": {
@@ -179,6 +182,29 @@
           "type": "string",
           "pattern": "^-?\\d+\\.\\d{2}$",
           "description": "Amount taken on this leg, in the document currency."
+        }
+      }
+    },
+    "payment_terms": {
+      "type": "object",
+      "required": [
+        "days",
+        "due_date"
+      ],
+      "additionalProperties": false,
+      "description": "The sale is invoiced on credit (1.17.0). This, not customer.is_b2b, is the signal to issue the invoice with a payment term: is_b2b is also set on card-paid EU sales with a VAT exemption. Only on a B2B customer with a vat_number (enforced by the validator, tier 3).",
+      "properties": {
+        "days": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 120,
+          "description": "The payment term in days, as agreed with the customer."
+        },
+        "due_date": {
+          "type": "string",
+          "format": "date",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "description": "The due date the producer set at shipping and shows the merchant. Sent rather than derived from days, so the two sides cannot disagree, for example when shipping and the event fall on either side of midnight."
         }
       }
     }
