@@ -19,6 +19,7 @@ Schemas:
 | `prepayment_event_id` | string | no | ULID linking back to a prior `payment.prepaid`. |
 | `invoice_number` | string | no | Producer-assigned invoice number. |
 | `payments` | array | no | How the sale was paid, one entry per method — see [How the sale was paid](#how-the-sale-was-paid). Each entry `{gateway, amount}` (+ optional `transaction_id`). Added in **1.12.0**. |
+| `payment_terms` | object | no | v2 only. The sale is invoiced on credit — see [Payment terms](#payment-terms). `{days, due_date}`, both required. Added in **1.17.0**. |
 
 ### Customer
 
@@ -57,6 +58,31 @@ The B2B-conditional requirements are enforced by `PayloadValidator`
   **no cost of goods**: they must not include the optional `unit_cost` field
   (`invariant_violated` on `data.items[<i>].unit_cost`). `discount` is a reduction
   line (negative amounts).
+
+## Payment terms
+
+`payment_terms` says the order is invoiced on credit, so the receiver issues the
+invoice with a payment term and a due date instead of booking it as paid.
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `days` | int | yes | The agreed term in days, `0`–`120`. |
+| `due_date` | string | yes | ISO date (`YYYY-MM-DD`). |
+
+- It is the signal for invoicing on credit, **not** `customer.is_b2b`: `is_b2b` is
+  also set on card-paid EU sales with a VAT exemption.
+- `due_date` is sent, not derived from `days` by the receiver. The producer sets it
+  at shipping and shows it to the merchant; a receiver computing its own could land
+  a day off, for example when shipping and the event fall on either side of midnight.
+- Requires `customer.is_b2b = true` and a `customer.vat_number`. Otherwise
+  `invariant_violated` on `data.payment_terms`.
+- v2 only. v1 is unchanged and does not apply the rule.
+- The receiver must run 1.17 before the producer sends it: an older receiver rejects
+  the unknown key.
+
+```json
+"payment_terms": { "days": 14, "due_date": "2026-10-23" }
+```
 
 ## Example (v2 envelope)
 

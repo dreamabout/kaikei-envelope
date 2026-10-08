@@ -30,6 +30,7 @@ use Dreamabout\KaikeiEnvelope\PayloadInterface;
  *   - prepayment_event_id : ULID; links back to the prepayment envelope
  *   - invoice_number      : assigned by the producer at issuance time
  *   - ean_number          : 13-digit GLN for B2B / public-sector invoicing
+ *   - payment_terms       : {days, due_date} -- the sale is invoiced on credit (v2, 1.17.0)
  */
 final class OrderShippedPayload implements PayloadInterface
 {
@@ -62,6 +63,17 @@ final class OrderShippedPayload implements PayloadInterface
          * @var list<array<string,mixed>>
          */
         public readonly array $payments = [],
+        /**
+         * The sale is invoiced on credit: `{days: int 0-120, due_date: Y-m-d}`.
+         *
+         * This, not `customer.is_b2b`, tells the receiver to issue an invoice
+         * with a payment term -- is_b2b is also set on card-paid EU sales with a
+         * VAT exemption. Only on a B2B customer with a VAT number (validator,
+         * tier 3). Appended last so positional callers keep working.
+         *
+         * @var array<string,mixed>|null
+         */
+        public readonly ?array $paymentTerms = null,
     ) {
     }
 
@@ -80,6 +92,7 @@ final class OrderShippedPayload implements PayloadInterface
             invoiceNumber: isset($row['invoice_number']) ? (string)$row['invoice_number'] : null,
             eanNumber: isset($row['ean_number']) ? (string)$row['ean_number'] : null,
             payments: \is_array($row['payments'] ?? null) ? \array_values($row['payments']) : [],
+            paymentTerms: \is_array($row['payment_terms'] ?? null) ? $row['payment_terms'] : null,
         );
     }
 
@@ -109,6 +122,9 @@ final class OrderShippedPayload implements PayloadInterface
         // empty array would assert "paid by nothing" rather than "not stated".
         if ([] !== $this->payments) {
             $out['payments'] = $this->payments;
+        }
+        if (null !== $this->paymentTerms) {
+            $out['payment_terms'] = $this->paymentTerms;
         }
 
         return $out;

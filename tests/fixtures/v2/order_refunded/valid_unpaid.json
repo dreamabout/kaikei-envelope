@@ -1,0 +1,15 @@
+{
+    "order_id": "O-310",
+    "reason": "merchant_initiated",
+    "items": [
+        {
+            "type": "physical",
+            "gross_amount": "-1250.00",
+            "vat_amount": "-250.00",
+            "vat_rate": "0.25"
+        }
+    ],
+    "refund_payments": [],
+    "unpaid": true,
+    "credit_note_number": "CN-2026-0310"
+}

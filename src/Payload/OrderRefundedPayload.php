@@ -15,7 +15,8 @@ use Dreamabout\KaikeiEnvelope\PayloadInterface;
  *   - order_id        : string
  *   - reason          : enum string -- 'customer_request' | 'chargeback' | 'merchant_initiated' | 'other'
  *   - items           : non-empty array of {type, gross_amount, vat_amount, vat_rate}
- *   - refund_payments : non-empty array of {gateway, original_transaction_id, refund_transaction_id, amount}
+ *   - refund_payments : array of {gateway, original_transaction_id, refund_transaction_id, amount};
+ *                       non-empty, unless `unpaid` is true, when it must be empty
  *
  * Optional:
  *   - customer            : object {country_code: string, is_b2b: bool, ...} -- the SAME
@@ -30,6 +31,10 @@ use Dreamabout\KaikeiEnvelope\PayloadInterface;
  *   - fx_rate             : decimal string
  *   - prepayment_event_id : ULID linking to the original prepayment envelope when refunding a prepaid order
  *   - credit_note_number  : assigned by the producer at credit-note issuance
+ *   - unpaid              : bool (v2, 1.17.0) -- the order was never paid; the credit note
+ *                           closes the receivable and moves no money, so refund_payments is
+ *                           empty and the sum invariant below does not apply. Explicit, so a
+ *                           producer that lost its legs stays distinguishable from it.
  *
  * Cross-leg invariant (validated by `PayloadValidator`, NOT enforced
  * by this DTO's construction): `sum(refund_payments[].amount) ==
@@ -57,6 +62,7 @@ final class OrderRefundedPayload implements PayloadInterface
         // the middle of the signature silently breaks every positional caller,
         // which is not what a minor release is allowed to do.
         public readonly ?array $customer = null,
+        public readonly ?bool $unpaid = null,
     ) {
     }
 
@@ -75,6 +81,7 @@ final class OrderRefundedPayload implements PayloadInterface
             fxRate: isset($row['fx_rate']) ? (string)$row['fx_rate'] : null,
             prepaymentEventId: isset($row['prepayment_event_id']) ? (string)$row['prepayment_event_id'] : null,
             creditNoteNumber: isset($row['credit_note_number']) ? (string)$row['credit_note_number'] : null,
+            unpaid: \is_bool($row['unpaid'] ?? null) ? $row['unpaid'] : null,
         );
     }
 
@@ -103,6 +110,9 @@ final class OrderRefundedPayload implements PayloadInterface
         }
         if (null !== $this->creditNoteNumber) {
             $out['credit_note_number'] = $this->creditNoteNumber;
+        }
+        if (null !== $this->unpaid) {
+            $out['unpaid'] = $this->unpaid;
         }
 
         return $out;

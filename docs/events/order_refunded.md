@@ -14,22 +14,40 @@ Schemas:
 | `order_id` | string | yes | Producer order identifier. |
 | `reason` | string | yes | `customer_request | chargeback | merchant_initiated | other`. |
 | `items` | array | yes | Non-empty; refunded lines carry **negative** `gross_amount`/`vat_amount`. Optional per-item `unit_cost` (positive DKK cost of one unit, `^\d+\.\d{2}$`) + `quantity` reverse the cost-of-goods booking — the receiver restocks inventory at `unit_cost × quantity`. Omit → no cost reversal. Added in schema **v1.2.0**. |
-| `refund_payments` | array | yes | Non-empty; each `{gateway, original_transaction_id, refund_transaction_id, amount}`. `gateway` uses the same accounting slugs as `order.shipped`'s `payments[]`; a refund back onto a gift card is `gift_card`, the name the receiver posts to the gift-card liability on. |
+| `refund_payments` | array | yes | Non-empty, unless `unpaid` is true (then empty); each `{gateway, original_transaction_id, refund_transaction_id, amount}`. `gateway` uses the same accounting slugs as `order.shipped`'s `payments[]`; a refund back onto a gift card is `gift_card`, the name the receiver posts to the gift-card liability on. |
 | `currency` | string | no | ISO 4217. |
 | `fx_rate` (v2) / `fx_rate_to_dkk` (v1) | string | no | Positive decimal rate to DKK. |
 | `prepayment_event_id` | string | no | ULID linking back to a prior `payment.prepaid`. |
 | `credit_note_number` | string | no | Producer-assigned credit-note number. |
+| `unpaid` | bool | no | v2 only. The order was never paid — see [Unpaid orders](#unpaid-orders). Added in **1.17.0**. |
 
 ## Cross-field invariants
 
 - Each `refund_payments[].amount` must be **positive**.
 - `sum(refund_payments[].amount) == -sum(items[].gross_amount)` — the
-  refunded money must equal the negated refunded line totals.
+  refunded money must equal the negated refunded line totals. Skipped when
+  `unpaid` is true.
+- `unpaid = true` together with `prepayment_event_id` is rejected
+  (`invariant_violated` on `data.unpaid`): a prepaid order has been paid.
 - `items[].type` ∈ `physical | gift_card | digital | shipping | fee |
   giftwrapping | discount`; `shipping`/`fee`/`giftwrapping`/`discount` are
   no-cost-of-goods charge/adjustment lines and must not include a
   `unit_cost` (`invariant_violated` on `data.items[<i>].unit_cost`).
   `discount` is a reduction line (negative amounts) — commonly used on credit notes.
+
+## Unpaid orders
+
+A credit note on an order that was never paid — an invoice on credit that is
+cancelled — closes the receivable and moves no money. It is sent with
+`"unpaid": true` and `"refund_payments": []`:
+
+- With `unpaid: true`, `refund_payments` **must** be empty (`invalid_data`), and the
+  sum invariant does not apply.
+- Without it, or with `unpaid: false`, the rules are unchanged: at least one refund
+  payment, and the sum invariant holds. An empty `refund_payments` is still an error,
+  so a producer that lost its legs stays distinguishable from an unpaid order.
+- v2 only. v1 is unchanged.
+- The receiver must run 1.17 before the producer sends it.
 
 ## Example (v2 envelope)
 
