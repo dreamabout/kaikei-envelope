@@ -4,7 +4,7 @@ entry per method. Additive and optional; producers that omit it stay valid.
 ```json
 "payments": [
   {"gateway": "stripe",   "transaction_id": "pi_1", "amount": "130.00"},
-  {"gateway": "giftcard",                           "amount": "50.00"}
+  {"gateway": "gift_card",                          "amount": "50.00"}
 ]
 ```
 
