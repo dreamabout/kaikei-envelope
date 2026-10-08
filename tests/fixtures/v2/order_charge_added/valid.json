@@ -1,0 +1,12 @@
+{
+    "order_id": "O-100",
+    "invoice_number": "INV-2026-0042",
+    "customer": { "country_code": "DK", "is_b2b": false },
+    "items": [
+        { "type": "fee", "gross_amount": "25.00", "vat_amount": "5.00", "vat_rate": "0.25" }
+    ],
+    "currency": "DKK",
+    "payments": [
+        { "gateway": "stripe", "transaction_id": "pi_3Pq0charge", "amount": "25.00" }
+    ]
+}

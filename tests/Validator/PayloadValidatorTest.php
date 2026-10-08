@@ -33,7 +33,8 @@ final class PayloadValidatorTest extends TestCase
 
     /** v2 only: v1 is the frozen mirror of the contract deployed before them. */
     private const V2_EVENT_FOR_DIR = [
-        'payout_amended' => 'payout.amended',
+        'payout_amended'     => 'payout.amended',
+        'order_charge_added' => 'order.charge_added',
     ];
 
     /** v2 only: v1 is the frozen mirror of the contract deployed before them. */
@@ -212,6 +213,33 @@ final class PayloadValidatorTest extends TestCase
         self::assertSame(ValidationResult::HTTP_BAD_REQUEST, $result->httpStatus);
         self::assertSame('unknown_event_type', $this->firstError($result)->code);
         self::assertSame('event_type', $this->firstError($result)->field);
+    }
+
+    public function testOrderChargeAddedInAVersionOneEnvelopeIsAnUnknownEventType(): void
+    {
+        $data = $this->json(self::FIXTURE_ROOT . '/v2/order_charge_added/valid.json');
+
+        $result = $this->validator->validate($this->envelope(1, 'order.charge_added', $data));
+
+        self::assertSame(ValidationResult::HTTP_BAD_REQUEST, $result->httpStatus);
+        self::assertSame('unknown_event_type', $this->firstError($result)->code);
+        self::assertSame('event_type', $this->firstError($result)->field);
+    }
+
+    /**
+     * Unlike order.shipped, a supplementary invoice must carry its own number: the
+     * receiver derives the voucher number from it, so without one the charge has
+     * no voucher of its own.
+     */
+    public function testOrderChargeAddedWithoutInvoiceNumberIsInvalidData(): void
+    {
+        $data = $this->json(self::FIXTURE_ROOT . '/v2/order_charge_added/invalid_missing_invoice_number.json');
+
+        $result = $this->validator->validate($this->envelope(2, 'order.charge_added', $data));
+
+        self::assertSame(ValidationResult::HTTP_UNPROCESSABLE, $result->httpStatus);
+        self::assertSame('invalid_data', $this->firstError($result)->code);
+        self::assertSame('data.invoice_number', $this->firstError($result)->field);
     }
 
     public function testUnsupportedSchemaVersionRejected(): void
@@ -827,6 +855,47 @@ final class PayloadValidatorTest extends TestCase
         self::assertContains('data.customer.vat_number', $fields);
         self::assertContains('data.customer.address', $fields);
         self::assertContains('data.customer.email', $fields);
+    }
+
+    public function testB2BChargeAddedWithoutAVatNumberIsRejected(): void
+    {
+        $data = $this->json(self::FIXTURE_ROOT . '/v2/order_charge_added/valid.json');
+        $data['customer'] = [
+            'country_code' => 'DK',
+            'is_b2b'       => true,
+            'customer_id'  => 'C-1',
+            'name'         => 'Firma ApS',
+            'email'        => 'bogholderi@example.com',
+            'address'      => ['street' => 'Vej 1', 'city' => 'Aarhus', 'postal_code' => '8000', 'country' => 'DK'],
+        ];
+
+        $result = $this->validator->validate($this->envelope(2, 'order.charge_added', $data));
+
+        self::assertSame(ValidationResult::HTTP_UNPROCESSABLE, $result->httpStatus);
+        $fields = \array_map(static fn ($e) => $e->field, $result->getErrors());
+        self::assertSame(['data.customer.vat_number'], $fields);
+    }
+
+    public function testChargeAddedLinesFollowTheShippedLineInvariants(): void
+    {
+        $data = $this->json(self::FIXTURE_ROOT . '/v2/order_charge_added/valid.json');
+        $data['items'] = [['type' => 'gift_card', 'gross_amount' => '100.00', 'vat_amount' => '20.00', 'vat_rate' => '0.25']];
+
+        $result = $this->validator->validate($this->envelope(2, 'order.charge_added', $data));
+
+        self::assertSame('invariant_violated', $this->firstError($result)->code);
+    }
+
+    public function testChargeAddedRequiresADeliveryPostalCodeWhenEnforced(): void
+    {
+        $data = $this->json(self::FIXTURE_ROOT . '/v2/order_charge_added/valid.json');
+        $data['customer'] = ['country_code' => 'DE', 'is_b2b' => false];
+        $data['items'] = [['type' => 'fee', 'gross_amount' => '23.80', 'vat_amount' => '3.80', 'vat_rate' => '0.19']];
+
+        $result = (new PayloadValidator(requireDeliveryPostalCode: true))->validate($this->envelope(2, 'order.charge_added', $data));
+
+        self::assertFalse($result->isValid());
+        self::assertSame('data.customer.postal_code', $this->firstError($result)->field);
     }
 
     public function testB2BAddressPresentButMissingSubFieldsRejected(): void

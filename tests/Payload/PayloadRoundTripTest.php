@@ -6,6 +6,7 @@ namespace Dreamabout\KaikeiEnvelope\Tests\Payload;
 
 use Dreamabout\KaikeiEnvelope\Payload\AccountFeePayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderCapturedPayload;
+use Dreamabout\KaikeiEnvelope\Payload\OrderChargeAddedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderFeePayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderRefundedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderShippedPayload;
@@ -267,6 +268,40 @@ final class PayloadRoundTripTest extends TestCase
 
         $out = PayoutAmendedPayload::fromArray($in)->toArray();
         self::assertSame($in, $out);
+    }
+
+    public function testOrderChargeAddedRoundTrip(): void
+    {
+        $in = [
+            'order_id'       => 'O-100',
+            'invoice_number' => 'INV-2026-0042',
+            'customer'       => ['country_code' => 'DK', 'is_b2b' => false],
+            'items'          => [
+                ['type' => 'fee', 'gross_amount' => '25.00', 'vat_amount' => '5.00', 'vat_rate' => '0.25'],
+            ],
+            'currency'       => 'EUR',
+            'fx_rate'        => '7.46',
+            'payments'       => [
+                ['gateway' => 'stripe', 'transaction_id' => 'pi_1', 'amount' => '25.00'],
+            ],
+        ];
+
+        $out = OrderChargeAddedPayload::fromArray($in)->toArray();
+        self::assertSame($in, $out);
+    }
+
+    public function testOrderChargeAddedOmitsAbsentOptionalFields(): void
+    {
+        $in = [
+            'order_id'       => 'O-100',
+            'invoice_number' => 'INV-2026-0042',
+            'customer'       => ['country_code' => 'DK', 'is_b2b' => false],
+            'items'          => [
+                ['type' => 'shipping', 'gross_amount' => '50.00', 'vat_amount' => '10.00', 'vat_rate' => '0.25'],
+            ],
+        ];
+
+        self::assertSame($in, OrderChargeAddedPayload::fromArray($in)->toArray());
     }
 
     public function testPaymentPrepaidRoundTrip(): void

@@ -37,6 +37,11 @@ namespace Dreamabout\KaikeiEnvelope;
  * reported by `payout.paid` gained transactions. Same fields as
  * `payout.paid`, carrying the payout's full new state. See
  * docs/events/payout_amended.md.
+ *
+ * `order.charge_added` (added 1.16.0) is additive, v2 only: a supplementary
+ * invoice on an order `order.shipped` already invoiced, with the same
+ * customer, item and payment shapes and its own required `invoice_number`.
+ * See docs/events/order_charge_added.md.
  */
 enum EventType: string
 {
@@ -49,6 +54,7 @@ enum EventType: string
     case PayoutDisbursed = 'payout.disbursed';
     case AccountFee      = 'account.fee';
     case PayoutAmended   = 'payout.amended';
+    case OrderChargeAdded = 'order.charge_added';
 
     case PurchasePrepaymentApproved = 'purchase.prepayment_approved';
     case PurchaseInvoiceApproved    = 'purchase.invoice_approved';
@@ -72,7 +78,7 @@ enum EventType: string
     /**
      * The first `schema_version` that carries this event type. v1 is frozen
      * as the mirror of the contract deployed before the purchase events, so
-     * they and `payout.amended` exist from v2; the receiver answers a v1 envelope carrying one
+     * they, `payout.amended` and `order.charge_added` exist from v2; the receiver answers a v1 envelope carrying one
      * with `unknown_event_type`.
      */
     public function minimumSchemaVersion(): int
@@ -85,7 +91,8 @@ enum EventType: string
             self::PurchasePrepaymentPaid,
             self::PurchaseBooked,
             self::PurchaseRejected,
-            self::PayoutAmended => 2,
+            self::PayoutAmended,
+            self::OrderChargeAdded => 2,
             default => 1,
         };
     }

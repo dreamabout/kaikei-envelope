@@ -1,0 +1,182 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/dreamabout/kaikei-envelope/schemas/v2/order_charge_added.payload.schema.json",
+  "title": "order.charge_added payload",
+  "description": "A supplementary invoice on an order already invoiced by order.shipped: something charged after shipping, such as a payment fee paid through a payment link. Same customer, item and payment shapes as order.shipped. invoice_number is required and must come from the same number series as order.shipped's, because the receiver derives the voucher number from it.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "order_id",
+    "invoice_number",
+    "customer",
+    "items"
+  ],
+  "properties": {
+    "order_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The ORIGINAL order, the one order.shipped already invoiced."
+    },
+    "invoice_number": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The supplementary invoice's own number, from the same series as invoice_number on order.shipped. Required here (optional on order.shipped): the receiver numbers the voucher from it, so a number of its own gives the charge a voucher of its own."
+    },
+    "customer": {
+      "$ref": "#/$defs/customer"
+    },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/item"
+      }
+    },
+    "currency": {
+      "$ref": "#/$defs/currency"
+    },
+    "fx_rate": {
+      "$ref": "#/$defs/decimal"
+    },
+    "payments": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/payment"
+      },
+      "description": "How the sale was paid, one entry per payment method. An array because an order can be split across methods (gift card plus card), which a single gateway field cannot express -- the same reason order.refunded uses refund_payments[]. Optional and additive: producers that omit it stay valid, and the receiver can still resolve the method from the cash-in leg (payment.prepaid / order.captured) by order_id."
+    }
+  },
+  "$defs": {
+    "decimal": {
+      "type": "string",
+      "pattern": "^-?\\d+\\.\\d{2}$"
+    },
+    "currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$"
+    },
+    "customer": {
+      "type": "object",
+      "required": [
+        "country_code",
+        "is_b2b"
+      ],
+      "properties": {
+        "country_code": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}$"
+        },
+        "postal_code": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9 -]{0,11}$",
+          "description": "DELIVERY postal code, from the same address as country_code. Determines the VAT territory: 78266 is Buesingen (outside the EU VAT area entirely), 6691 is Jungholz (19%, not Austria's 20%). A billing postal code paired with a delivery country is wrong in exactly the cases this exists to catch."
+        },
+        "is_b2b": {
+          "type": "boolean"
+        },
+        "customer_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "vat_number": {
+          "type": "string"
+        },
+        "ean_number": {
+          "type": "string",
+          "pattern": "^[0-9]{13}$"
+        },
+        "address": {
+          "$ref": "#/$defs/address"
+        }
+      }
+    },
+    "address": {
+      "type": "object",
+      "properties": {
+        "street": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "postal_code": {
+          "type": "string"
+        },
+        "country": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}$"
+        }
+      }
+    },
+    "item": {
+      "type": "object",
+      "required": [
+        "type",
+        "gross_amount",
+        "vat_amount",
+        "vat_rate"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "physical",
+            "gift_card",
+            "digital",
+            "shipping",
+            "fee",
+            "giftwrapping",
+            "discount"
+          ]
+        },
+        "gross_amount": {
+          "type": "string",
+          "pattern": "^-?\\d+\\.\\d{2}$"
+        },
+        "vat_amount": {
+          "type": "string",
+          "pattern": "^-?\\d+\\.\\d{2}$"
+        },
+        "vat_rate": {
+          "type": "string",
+          "pattern": "^-?\\d+\\.\\d{2,4}$"
+        },
+        "unit_cost": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d{2}$"
+        }
+      }
+    },
+    "payment": {
+      "type": "object",
+      "required": [
+        "gateway",
+        "amount"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "gateway": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Payment method the money came in on, as the accounting slug (same vocabulary as payment.prepaid / order.captured)."
+        },
+        "transaction_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Gateway-side reference, when there is one. OPTIONAL: gift cards and hand-entered payments legitimately have none, and requiring it would only produce placeholder values."
+        },
+        "amount": {
+          "type": "string",
+          "pattern": "^-?\\d+\\.\\d{2}$",
+          "description": "Amount taken on this leg, in the document currency."
+        }
+      }
+    }
+  }
+}

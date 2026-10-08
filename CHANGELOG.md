@@ -9,7 +9,32 @@ and this project adheres to [Semantic Versioning][semver].
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.15.0...HEAD
+[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.16.0...HEAD
+
+## [1.16.0] - 2026-10-07
+
+### Added
+
+- **`order.charge_added`** (v2 only): a supplementary invoice on an order that
+  `order.shipped` already invoiced -- for example a payment fee the customer pays
+  through a payment link after shipping. Before it the contract had no way to say
+  "one more invoice on an order that has already shipped".
+
+  `order_id` is the original order. `customer`, `items[]` and `payments[]` have
+  exactly `order.shipped`'s shapes and line types, and the same four tier-3 rules
+  apply: B2B customer, line invariants, no `unit_cost` on charge lines and the
+  delivery postal code. `invoice_number` is **required** (optional on
+  `order.shipped`) and must come from the same number series, because the receiver
+  numbers the voucher from it. Credit notes against it are out of scope. v1 answers
+  it with `unknown_event_type`, like `payout.amended`.
+
+  New: `EventType::OrderChargeAdded`, `Payload\OrderChargeAddedPayload`,
+  `schemas/v2/order_charge_added.payload.schema.json`, fixtures and
+  `docs/events/order_charge_added.md`.
+
+  The receiver must run 1.16 before the producer sends it.
+
+[1.16.0]: https://github.com/dreamabout/kaikei-envelope/compare/v1.15.0...v1.16.0
 
 ## [1.15.0] - 2026-10-06
 
