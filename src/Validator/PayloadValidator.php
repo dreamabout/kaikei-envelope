@@ -299,7 +299,7 @@ final class PayloadValidator
             EventType::PurchasePrepaymentApproved => [...$this->documentBalanceErrors($data), ...$this->documentDkkErrors($data, false), ...$this->supplierVatNumberErrors($data)],
             EventType::PurchaseInvoiceApproved,
             EventType::PurchaseCreditNoteApproved => [...$this->documentBalanceErrors($data), ...$this->documentDkkErrors($data, true), ...$this->supplierVatNumberErrors($data)],
-            EventType::PurchaseBooked => [...$this->statusSubjectErrors($data), ...$this->bookedSupplierNumberErrors($data)],
+            EventType::PurchaseBooked => [...$this->statusSubjectErrors($data), ...$this->bookedSupplierNumberErrors($data), ...$this->bookedVoucherErrors($data)],
             EventType::PurchaseRejected => $this->statusSubjectErrors($data),
             // Single amounts and ids: nothing the schema cannot already say.
             EventType::PurchaseGoodsReceived,
@@ -486,6 +486,35 @@ final class PayloadValidator
         }
 
         return [];
+    }
+
+    /**
+     * A booking has a voucher. The one exception (1.18.0) is a prepayment's
+     * payment with no VAT to repost (EU, import): it is settled without booking,
+     * and kaikei answers without voucher_number and accounting_year and with
+     * `entries: []`, so Dreamshop can still close the payment.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return list<FieldError>
+     */
+    private function bookedVoucherErrors(array $data): array
+    {
+        if (EventType::PurchasePrepaymentPaid->value === ($data['source_event_type'] ?? null)) {
+            return [];
+        }
+
+        $errors = [];
+        foreach (['voucher_number', 'accounting_year'] as $field) {
+            if (!\array_key_exists($field, $data)) {
+                $errors[] = new FieldError("data.{$field}", 'invalid_data', "Field 'data.{$field}' is required unless a purchase.prepayment_paid was settled without booking.");
+            }
+        }
+        if ([] === ($data['entries'] ?? null)) {
+            $errors[] = new FieldError('data.entries', 'invalid_data', "Field 'data.entries' must not be empty unless a purchase.prepayment_paid was settled without booking.");
+        }
+
+        return $errors;
     }
 
     /**

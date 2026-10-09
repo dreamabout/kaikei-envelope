@@ -9,7 +9,35 @@ and this project adheres to [Semantic Versioning][semver].
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.17.0...HEAD
+[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.18.0...HEAD
+
+## [1.18.0] - 2026-10-09
+
+### Added
+
+- **`purchase.booked` settled without booking**: when `source_event_type` is
+  `purchase.prepayment_paid`, `voucher_number` and `accounting_year` may be left
+  out and `entries` may be `[]`. That is how kaikei answers a prepayment's payment
+  with no VAT to repost (EU, import): settled, with nothing to book, so Dreamshop
+  can close the payment. For every other source the three are required as before,
+  now checked in tier 3 (`invalid_data` on each). `PurchaseBookedPayload::$voucherNumber`
+  and `$accountingYear` are nullable, and `toArray()` omits them when null.
+- **`purchase.rejected` reason `modtagelse_ugyldig`**: a goods receipt moves more
+  than its invoice has left in transit, or moves nothing. Fixed at the goods
+  receipt in Dreamshop.
+
+### Changed
+
+- **Docs**: an invoice that deducts the prepayment itself is sent as the whole
+  delivery with `offsets[]` (`purchase_invoice_approved.md`), and
+  `offsets[].vat_already_deducted` is in DKK (doc and schema description). No new
+  field.
+
+Everything valid in 1.17 is still valid. The receiver must run 1.18 before the
+producer sends either new form: an older receiver rejects a booking without a
+voucher and the unknown reason code.
+
+[1.18.0]: https://github.com/dreamabout/kaikei-envelope/compare/v1.17.0...v1.18.0
 
 ## [1.17.0] - 2026-10-09
 

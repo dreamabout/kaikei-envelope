@@ -48,7 +48,8 @@
                 "funktionsadskillelse",
                 "faktura_ikke_bogfoert",
                 "bilag_utilgaengeligt",
-                "skema_ugyldigt"
+                "skema_ugyldigt",
+                "modtagelse_ugyldig"
             ]
         },
         "message": {

@@ -368,6 +368,63 @@ final class PurchaseEventsTest extends TestCase
         self::assertTrue($this->validator->validate($this->envelope('purchase.booked', $data))->isValid());
     }
 
+    // ----- purchase.booked: settled without booking (1.18.0) -----------------
+
+    /**
+     * A prepayment's payment with no VAT to repost (EU, import) is settled without a
+     * voucher. kaikei still answers, so Dreamshop can close the payment.
+     */
+    public function testAPrepaymentPaymentMayBeSettledWithoutBooking(): void
+    {
+        $data = $this->fixtureFile('purchase_booked/valid_settled_without_booking.json');
+
+        self::assertTrue($this->validator->validate($this->envelope('purchase.booked', $data))->isValid());
+    }
+
+    public function testASettledPrepaymentPaymentMayStillCarryAVoucher(): void
+    {
+        $data = $this->fixture('purchase_booked');
+        $data['source_event_type'] = 'purchase.prepayment_paid';
+
+        self::assertTrue($this->validator->validate($this->envelope('purchase.booked', $data))->isValid());
+    }
+
+    /**
+     * @dataProvider bookedSources
+     */
+    public function testAnyOtherSourceMustBeBooked(string $source): void
+    {
+        $data = $this->fixtureFile('purchase_booked/valid_settled_without_booking.json');
+        $data['source_event_type'] = $source;
+        $data['supplier_number'] = 318;
+        if ('purchase.goods_received' === $source) {
+            $data['receipt_id'] = $data['obligation_id'];
+            unset($data['obligation_id']);
+        }
+
+        self::assertSame(
+            ['data.voucher_number=invalid_data', 'data.accounting_year=invalid_data', 'data.entries=invalid_data'],
+            $this->fields($this->validator->validate($this->envelope('purchase.booked', $data))),
+        );
+    }
+
+    /**
+     * @return iterable<string,array{0:string}>
+     */
+    public static function bookedSources(): iterable
+    {
+        yield from self::documentEventTypes();
+        yield 'goods receipt' => ['purchase.goods_received'];
+    }
+
+    public function testASettledPrepaymentPaymentStillCarriesEntries(): void
+    {
+        $data = $this->fixtureFile('purchase_booked/valid_settled_without_booking.json');
+        unset($data['entries']);
+
+        self::assertSame('invalid_data', $this->firstError($this->validator->validate($this->envelope('purchase.booked', $data)))->code);
+    }
+
     // ----- purchase.rejected: reason ---------------------------------------
 
     /**
@@ -392,7 +449,7 @@ final class PurchaseEventsTest extends TestCase
         foreach ([
             'klient_forkert', 'leverandoer_ukendt', 'leverandoer_moms_afviger', 'konto_mangler',
             'moms_uoverensstemmelse', 'sag_mangler', 'kategori_mangler', 'funktionsadskillelse',
-            'faktura_ikke_bogfoert', 'bilag_utilgaengeligt', 'skema_ugyldigt',
+            'faktura_ikke_bogfoert', 'bilag_utilgaengeligt', 'skema_ugyldigt', 'modtagelse_ugyldig',
         ] as $reason) {
             yield $reason => [$reason];
         }

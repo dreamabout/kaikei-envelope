@@ -5,7 +5,8 @@ Dreamshop fixes the cause and sends again with the **same** `obligation_id` (or
 `receipt_id`) and a **new** `event_id`.
 
 Schema: [v2](../../schemas/v2/purchase_rejected.payload.schema.json) (v2 only).
-Example: [`valid.json`](../../tests/fixtures/v2/purchase_rejected/valid.json).
+Examples: [`valid.json`](../../tests/fixtures/v2/purchase_rejected/valid.json) and
+[`valid_modtagelse_ugyldig.json`](../../tests/fixtures/v2/purchase_rejected/valid_modtagelse_ugyldig.json).
 
 ## `data` fields
 
@@ -33,5 +34,6 @@ Example: [`valid.json`](../../tests/fixtures/v2/purchase_rejected/valid.json).
 | `faktura_ikke_bogfoert` | A goods receipt's invoice is not booked yet. | Send again once the invoice is booked |
 | `bilag_utilgaengeligt` | The document file could not be fetched, or its `sha256` did not match. | Dreamshop's document endpoint |
 | `skema_ugyldigt` | The event failed validation. | The sender |
+| `modtagelse_ugyldig` | A goods receipt moves more than its invoice has left in transit, or moves nothing. Since 1.18.0. | The goods receipt in Dreamshop |
 
 The list is closed: a code not in it fails the schema.
