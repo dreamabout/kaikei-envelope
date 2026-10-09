@@ -1,0 +1,7 @@
+{
+    "client_id": "kasasagi",
+    "receipt_id": "01K6B3N5Q7S9U1W3Y5A7C9E1G3",
+    "source_event_type": "purchase.goods_received",
+    "reason": "modtagelse_ugyldig",
+    "message": "The receipt moves 4210.00 DKK, but the invoice has 3980.00 DKK left in transit."
+}

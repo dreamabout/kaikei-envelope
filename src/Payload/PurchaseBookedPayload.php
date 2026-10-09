@@ -12,12 +12,13 @@ use Dreamabout\KaikeiEnvelope\PayloadInterface;
  * The source event was booked in e-conomic. Sent with the same envelope and
  * signature as the events the other way.
  *
- * Required: client_id, source_event_type, voucher_number, accounting_year,
- * entries -- and exactly one subject: `receipt_id` when the source was
- * `purchase.goods_received`, `obligation_id` otherwise. `supplier_number` is
- * required when the source was a document (P, F, K); Dreamshop stores it on the
- * supplier when that field is empty there. Those conditions are
- * `PayloadValidator`'s.
+ * Required: client_id, source_event_type, entries -- and exactly one subject:
+ * `receipt_id` when the source was `purchase.goods_received`, `obligation_id`
+ * otherwise. `supplier_number` is required when the source was a document (P, F,
+ * K); Dreamshop stores it on the supplier when that field is empty there.
+ * `voucher_number` and `accounting_year` are required, and `entries` must not be
+ * empty, unless a `purchase.prepayment_paid` was settled without booking
+ * (1.18.0). Those conditions are `PayloadValidator`'s.
  */
 final class PurchaseBookedPayload implements PayloadInterface
 {
@@ -27,8 +28,8 @@ final class PurchaseBookedPayload implements PayloadInterface
     public function __construct(
         public readonly string $clientId,
         public readonly string $sourceEventType,
-        public readonly int $voucherNumber,
-        public readonly string $accountingYear,
+        public readonly ?int $voucherNumber,
+        public readonly ?string $accountingYear,
         public readonly array $entries,
         public readonly ?string $obligationId = null,
         public readonly ?string $receiptId = null,
@@ -44,8 +45,8 @@ final class PurchaseBookedPayload implements PayloadInterface
         return new self(
             clientId: (string) ($row['client_id'] ?? ''),
             sourceEventType: (string) ($row['source_event_type'] ?? ''),
-            voucherNumber: \is_int($row['voucher_number'] ?? null) ? $row['voucher_number'] : 0,
-            accountingYear: (string) ($row['accounting_year'] ?? ''),
+            voucherNumber: \is_int($row['voucher_number'] ?? null) ? $row['voucher_number'] : null,
+            accountingYear: PurchaseRows::optionalString($row, 'accounting_year'),
             entries: PurchaseRows::list($row, 'entries'),
             obligationId: PurchaseRows::optionalString($row, 'obligation_id'),
             receiptId: PurchaseRows::optionalString($row, 'receipt_id'),
@@ -66,8 +67,12 @@ final class PurchaseBookedPayload implements PayloadInterface
             $out['receipt_id'] = $this->receiptId;
         }
         $out['source_event_type'] = $this->sourceEventType;
-        $out['voucher_number']    = $this->voucherNumber;
-        $out['accounting_year']   = $this->accountingYear;
+        if (null !== $this->voucherNumber) {
+            $out['voucher_number'] = $this->voucherNumber;
+        }
+        if (null !== $this->accountingYear) {
+            $out['accounting_year'] = $this->accountingYear;
+        }
         if (null !== $this->supplierNumber) {
             $out['supplier_number'] = $this->supplierNumber;
         }
