@@ -9,7 +9,29 @@ and this project adheres to [Semantic Versioning][semver].
 
 ## [Unreleased]
 
-Next minor: 1.19.0.
+[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.19.0...HEAD
+
+## [1.19.0] - 2026-10-10
+
+### Added
+
+- **`balance.converted`** (v2 only): a currency conversion inside a payment
+  provider's multi-currency balance, e.g. PayPal converting a SEK payment to EUR
+  (T0200). Before it the contract had no way to report one: `payout.disbursed` is
+  a bank deposit, `account.fee` a fee, and `payment.prepaid`'s `settlement_*`
+  fields cover one direction only, not a refund converted back.
+
+  Fields: `conversion_id` (the provider's id, the receiver's dedup key),
+  `gateway`, `from {currency, amount}`, `to {currency, amount}`, `converted_at`
+  and an optional `related_transaction_id` (the payment or refund it belongs to).
+  Both amounts are positive; the direction is in `from` and `to`. The schema
+  rejects a negative amount and a missing `conversion_id`; tier 3 rejects a zero
+  amount and the same currency on both sides (`invariant_violated`). The name is
+  provider-neutral, so any provider with a multi-currency balance can send it.
+
+  New: `EventType::BalanceConverted`, `Payload\BalanceConvertedPayload`,
+  `schemas/v2/balance_converted.payload.schema.json`, fixtures and
+  `docs/events/balance_converted.md`.
 
 ### Changed
 
@@ -21,10 +43,11 @@ Next minor: 1.19.0.
   "must not be zero"). `account.fee.amount` must still be positive. The schemas
   already allowed the minus; their descriptions now explain the sign.
 
-Everything valid in 1.18 is still valid. The receiver must run 1.19 and book a
-negative fee before the producer sends one: an older receiver rejects it.
+Everything valid in 1.18 is still valid. The receiver must run 1.19 before the
+producer sends `balance.converted` or a negative fee: an older receiver rejects
+both.
 
-[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.18.0...HEAD
+[1.19.0]: https://github.com/dreamabout/kaikei-envelope/compare/v1.18.0...v1.19.0
 
 ## [1.18.0] - 2026-10-09
 

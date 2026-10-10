@@ -1,0 +1,7 @@
+{
+    "conversion_id": "EXAMPLECONV000001",
+    "gateway": "paypal",
+    "from": { "currency": "SEK", "amount": "1250.00" },
+    "to": { "amount": "110.00" },
+    "converted_at": "2026-01-15T10:00:00Z"
+}

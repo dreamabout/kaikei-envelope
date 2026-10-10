@@ -1,0 +1,28 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://github.com/dreamabout/kaikei-envelope/schemas/v2/balance_converted.payload.schema.json",
+    "title": "balance.converted payload",
+    "description": "A currency conversion inside a payment provider's multi-currency balance (e.g. PayPal T0200): from.amount left the balance in from.currency and to.amount arrived in to.currency. Both amounts are positive; the direction is carried by from and to. conversion_id is the provider's id for the conversion and the receiver's dedup key.",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["conversion_id", "gateway", "from", "to", "converted_at"],
+    "properties": {
+        "conversion_id": { "type": "string", "minLength": 1 },
+        "gateway": { "type": "string", "minLength": 1 },
+        "from": { "$ref": "#/$defs/money" },
+        "to": { "$ref": "#/$defs/money" },
+        "converted_at": { "type": "string", "format": "date-time" },
+        "related_transaction_id": { "type": "string", "minLength": 1 }
+    },
+    "$defs": {
+        "money": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["currency", "amount"],
+            "properties": {
+                "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
+                "amount": { "type": "string", "pattern": "^\\d+\\.\\d{2}$" }
+            }
+        }
+    }
+}

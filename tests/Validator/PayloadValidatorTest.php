@@ -35,6 +35,7 @@ final class PayloadValidatorTest extends TestCase
     private const V2_EVENT_FOR_DIR = [
         'payout_amended'     => 'payout.amended',
         'order_charge_added' => 'order.charge_added',
+        'balance_converted'  => 'balance.converted',
     ];
 
     /** v2 only: v1 is the frozen mirror of the contract deployed before them. */
@@ -224,6 +225,54 @@ final class PayloadValidatorTest extends TestCase
         self::assertSame(ValidationResult::HTTP_BAD_REQUEST, $result->httpStatus);
         self::assertSame('unknown_event_type', $this->firstError($result)->code);
         self::assertSame('event_type', $this->firstError($result)->field);
+    }
+
+    public function testBalanceConvertedInAVersionOneEnvelopeIsAnUnknownEventType(): void
+    {
+        $data = $this->json(self::FIXTURE_ROOT . '/v2/balance_converted/valid.json');
+
+        $result = $this->validator->validate($this->envelope(1, 'balance.converted', $data));
+
+        self::assertSame(ValidationResult::HTTP_BAD_REQUEST, $result->httpStatus);
+        self::assertSame('unknown_event_type', $this->firstError($result)->code);
+        self::assertSame('event_type', $this->firstError($result)->field);
+    }
+
+    /**
+     * A conversion between two amounts in the same currency moves nothing: the
+     * producer sent something that is not a conversion.
+     */
+    public function testBalanceConvertedWithTheSameCurrencyOnBothSidesIsAnInvariantViolation(): void
+    {
+        $data = $this->json(self::FIXTURE_ROOT . '/v2/balance_converted/invariant_same_currency.json');
+
+        $result = $this->validator->validate($this->envelope(2, 'balance.converted', $data));
+
+        self::assertSame(ValidationResult::HTTP_UNPROCESSABLE, $result->httpStatus);
+        self::assertSame('invariant_violated', $this->firstError($result)->code);
+        self::assertSame('data.to.currency', $this->firstError($result)->field);
+    }
+
+    public function testBalanceConvertedWithAZeroAmountIsAnInvariantViolation(): void
+    {
+        $data = $this->json(self::FIXTURE_ROOT . '/v2/balance_converted/invariant_zero_amount.json');
+
+        $result = $this->validator->validate($this->envelope(2, 'balance.converted', $data));
+
+        self::assertSame(ValidationResult::HTTP_UNPROCESSABLE, $result->httpStatus);
+        self::assertSame('invariant_violated', $this->firstError($result)->code);
+        self::assertSame('data.to.amount', $this->firstError($result)->field);
+    }
+
+    public function testBalanceConvertedWithoutConversionIdIsInvalidData(): void
+    {
+        $data = $this->json(self::FIXTURE_ROOT . '/v2/balance_converted/invalid_missing_conversion_id.json');
+
+        $result = $this->validator->validate($this->envelope(2, 'balance.converted', $data));
+
+        self::assertSame(ValidationResult::HTTP_UNPROCESSABLE, $result->httpStatus);
+        self::assertSame('invalid_data', $this->firstError($result)->code);
+        self::assertSame('data.conversion_id', $this->firstError($result)->field);
     }
 
     /**
