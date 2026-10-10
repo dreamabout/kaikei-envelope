@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning][semver].
 
 ## [Unreleased]
 
+Next minor: 1.19.0.
+
+### Changed
+
+- **`order.fee.amount` may be negative**: the provider gave the fee back (PayPal
+  returns the chargeback fee when it reverses a chargeback). It is the same fee
+  with the opposite sign, on the same account, so the receiver credits
+  `gateway_fee(gateway, fee_type)` and debits `gateway_clearing(gateway)`. No new
+  `fee_type`. Zero is still rejected (`invariant_violated` on `data.amount`, now
+  "must not be zero"). `account.fee.amount` must still be positive. The schemas
+  already allowed the minus; their descriptions now explain the sign.
+
+Everything valid in 1.18 is still valid. The receiver must run 1.19 and book a
+negative fee before the producer sends one: an older receiver rejects it.
+
 [Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.18.0...HEAD
 
 ## [1.18.0] - 2026-10-09

@@ -287,9 +287,9 @@ final class PayloadValidator
             // payout.amended carries the payout's full new state, so the same
             // arithmetic holds for it as for payout.paid.
             EventType::PayoutAmended => $this->payoutErrors($data),
-            EventType::OrderFee => $this->feeErrors($data),
-            // account.fee reuses order.fee's positive-amount invariant (the
-            // shop-level account fee must be a positive magnitude).
+            EventType::OrderFee => $this->orderFeeErrors($data),
+            // The shop-level account fee must be a positive magnitude: no
+            // account fee has been seen coming back, so it has no refund form.
             EventType::AccountFee => $this->feeErrors($data),
             EventType::OrderCaptured => $this->settlementBlockErrors($data),
             // payout.disbursed carries a single gross amount -- no
@@ -518,9 +518,30 @@ final class PayloadValidator
     }
 
     /**
-     * A booked fee (processing or chargeback) must be a positive amount.
-     * fee_type membership is enforced by the schema enum; this guards the
-     * one cross-field rule the schema can't express for a decimal string.
+     * An order fee is never zero. A negative amount (1.19.0) is a fee the
+     * provider gave back -- e.g. PayPal returning the chargeback fee when it
+     * reverses the chargeback -- and the receiver credits the fee account.
+     * fee_type membership is enforced by the schema enum.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return list<FieldError>
+     */
+    private function orderFeeErrors(array $data): array
+    {
+        // Reached only after the data schema validated: amount is a
+        // present decimal string.
+        $amount = (string) ($data['amount'] ?? '0');
+        if (0 === \bccomp($amount, '0.00', 2)) {
+            return [new FieldError('data.amount', 'invariant_violated', "Fee amount must not be zero (got {$amount}).")];
+        }
+
+        return [];
+    }
+
+    /**
+     * An account fee must be a positive amount -- the one cross-field rule
+     * the schema can't express for a decimal string.
      *
      * @param array<string, mixed> $data
      *
