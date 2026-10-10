@@ -23,6 +23,7 @@ Same item shape as `order.shipped`, plus the capture-side fields.
 | `currency` | string | no | ISO 4217. |
 | `fx_rate` (v2) / `fx_rate_to_dkk` (v1) | string | no | Positive decimal rate to DKK. |
 | `invoice_number` | string | no | Producer-assigned invoice number. |
+| `amount` (v2, since 1.19.0) | string | no | Decimal, two places, not negative. What the provider **actually took**, in `currency`. See *Overpayment* below. |
 
 > Note: unlike `order.shipped`, the prepaid validator does **not** enforce
 > the extra B2B customer fields — only `country_code` + `is_b2b` are
@@ -57,6 +58,26 @@ Same item shape as `order.shipped`, plus the capture-side fields.
     }
 }
 ```
+
+### Overpayment: `amount` (optional, since 1.19.0)
+
+`amount` is what the payment provider actually took from the customer, in the
+order's currency. It is normally the sum of `items`, and the producer may leave it
+out. It matters when the customer paid **more** than the order: the receiver books
+the lines as usual and the excess as a balance owed to the customer.
+
+```json
+"items": [
+    { "type": "physical", "gross_amount": "100.00", "vat_amount": "18.70", "vat_rate": "0.23" }
+],
+"currency": "PLN",
+"amount": "110.00"
+```
+
+Absent, the receiver takes the sum of `items`, exactly as before 1.19.0.
+
+It is not `settlement_amount`: that one is in the **settlement** currency (a PLN
+order that PayPal settles in EUR), so it cannot be compared with the lines.
 
 ### Settlement block (optional)
 
