@@ -47,6 +47,11 @@
       "type": "string",
       "pattern": "^-?\\d+\\.\\d{2}$"
     },
+    "amount": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d{2}$",
+      "description": "What the payment provider actually took, in the order's currency (`currency`). Optional (since 1.19.0). Can exceed the sum of `items` when the customer overpaid; the receiver books the excess as a balance owed to the customer. Absent: the receiver takes the sum of `items`, as before 1.19.0. Unlike `settlement_amount`, which is in the settlement currency and so cannot be compared with the lines."
+    },
     "invoice_number": {
       "type": "string",
       "minLength": 1

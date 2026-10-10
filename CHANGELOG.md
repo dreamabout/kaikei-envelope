@@ -32,6 +32,14 @@ and this project adheres to [Semantic Versioning][semver].
   New: `EventType::BalanceConverted`, `Payload\BalanceConvertedPayload`,
   `schemas/v2/balance_converted.payload.schema.json`, fixtures and
   `docs/events/balance_converted.md`.
+- **`payment.prepaid.amount`** (v2 only, optional): what the payment provider
+  actually took, in the order's `currency`, as a non-negative decimal with two
+  places (`"110.00"`). It can exceed the sum of `items` when the customer
+  overpaid, so the receiver can book the excess as a balance owed to the customer.
+  Absent, the receiver takes the sum of `items` as before. `settlement_amount`
+  cannot serve: it is in the settlement currency, which differs from the order's
+  when the provider converted the money. `PaymentPrepaidPayload::$amount`, nullable,
+  omitted from `toArray()` when null.
 
 ### Changed
 
@@ -46,6 +54,8 @@ and this project adheres to [Semantic Versioning][semver].
 Everything valid in 1.18 is still valid. The receiver must run 1.19 before the
 producer sends `balance.converted` or a negative fee: an older receiver rejects
 both.
+producer sends `amount` or a negative fee: an older receiver rejects the unknown
+field and the negative fee.
 
 [1.19.0]: https://github.com/dreamabout/kaikei-envelope/compare/v1.18.0...v1.19.0
 

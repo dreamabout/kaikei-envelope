@@ -350,6 +350,26 @@ final class PayloadRoundTripTest extends TestCase
         self::assertSame($in, $out);
     }
 
+    public function testPaymentPrepaidRoundTripWithAmount(): void
+    {
+        $in = [
+            'order_id'       => 'O-401',
+            'customer'       => ['country_code' => 'PL', 'is_b2b' => false],
+            'gateway'        => 'paypal',
+            'transaction_id' => 'paypal_tx_overpaid',
+            'prepaid_at'     => '2026-10-03T09:12:00Z',
+            'items'          => [
+                ['type' => 'physical', 'gross_amount' => '100.00', 'vat_amount' => '18.70', 'vat_rate' => '0.23'],
+            ],
+            'currency'       => 'PLN',
+            'amount'         => '110.00',
+        ];
+
+        $payload = PaymentPrepaidPayload::fromArray($in);
+        self::assertSame('110.00', $payload->amount);
+        self::assertSame($in, $payload->toArray());
+    }
+
     public function testOrderShippedDefaultsForMissingRequired(): void
     {
         // Tolerance: fromArray builds whatever it can; the validator
