@@ -138,7 +138,7 @@ $envelope = Envelope::fromArray($decoded);
 | `order.refunded` | CreditNoteIssued | credit-note voucher |
 | `payment.prepaid` | InvoiceIssued → prepaid branch | prepayment liability |
 | `payout.paid` | SettlementImported | payout pass |
-| `order.fee` | provider fee / chargeback against an order | fee → gateway_fee / gateway_clearing |
+| `order.fee` | provider fee / chargeback against an order; negative = fee given back | fee → gateway_fee / gateway_clearing (reversed when negative) |
 | `payout.disbursed` | gateway wallet → own bank account | bank / gateway_clearing |
 | `account.fee` | standing provider account fee | fee → gateway_fee |
 | `payout.amended` (v2 only) | a reported payout gained transactions | re-reconcile; book any fee difference |

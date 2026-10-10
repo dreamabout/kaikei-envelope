@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://github.com/dreamabout/kaikei-envelope/schemas/v2/order_fee.payload.schema.json",
     "title": "order.fee payload",
-    "description": "A standalone provider fee or adjustment against an order (processing or chargeback), decoupled from capture/payout timing. The receiver books it debit gateway_fee(gateway, fee_type) / credit gateway_clearing(gateway). amount > 0 is enforced as a cross-field invariant in PayloadValidator.",
+    "description": "A standalone provider fee or adjustment against an order (processing or chargeback), decoupled from capture/payout timing. The receiver books it debit gateway_fee(gateway, fee_type) / credit gateway_clearing(gateway). A negative amount (1.19.0) is a fee the provider gave back; the receiver then credits gateway_fee(gateway, fee_type) and debits gateway_clearing(gateway). amount != 0 is enforced as a cross-field invariant in PayloadValidator.",
     "type": "object",
     "additionalProperties": false,
     "required": ["order_id", "gateway", "amount", "fee_type"],

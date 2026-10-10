@@ -129,6 +129,8 @@ the structural strictness differs, and that lives in the schemas.
 | refunded | each `refund_payments[].amount > 0` | `invariant_violated` |
 | refunded | `sum(refund_payments.amount) == -sum(items.gross_amount)` | `invariant_violated` |
 | payout | `gross_amount == fee_amount + net_amount` | `invariant_violated` |
+| order.fee | `amount != 0` (negative = fee given back, 1.19.0) | `invariant_violated` |
+| account.fee | `amount > 0` | `invariant_violated` |
 | shipped (B2B) | `customer_id`, `name`, `vat_number`, full `address`, `email`-unless-`ean_number` present | `invalid_data` |
 
 Arithmetic uses `ext-bcmath` at scale 2 (added to the require

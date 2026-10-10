@@ -15,7 +15,8 @@ use Dreamabout\KaikeiEnvelope\PayloadInterface;
  * Required: fee_id, gateway, amount, incurred_at. Optional: currency, fx_rate.
  *
  * `amount` is a positive 2dp magnitude -- the `amount > 0` invariant is
- * enforced by `PayloadValidator` (mirroring order.fee), NOT this DTO. No
+ * enforced by `PayloadValidator`, NOT this DTO. Unlike order.fee (which may
+ * be negative since 1.19.0), an account fee has no refund form. No
  * fee_type: the event itself is the discriminator (always the 'account'
  * bucket).
  */

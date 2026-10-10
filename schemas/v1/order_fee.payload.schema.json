@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://github.com/dreamabout/kaikei-envelope/schemas/v1/order_fee.payload.schema.json",
     "title": "order.fee payload (v1 mirror)",
-    "description": "v1 mirror of order.fee. order.fee is additive (introduced in package 1.1.0); the v1 variant uses the lenient decimal/currency conventions of the rest of the v1 contract. amount > 0 is enforced as a cross-field invariant in PayloadValidator.",
+    "description": "v1 mirror of order.fee. order.fee is additive (introduced in package 1.1.0); the v1 variant uses the lenient decimal/currency conventions of the rest of the v1 contract. A negative amount (1.19.0) is a fee the provider gave back; the receiver then credits gateway_fee(gateway, fee_type) and debits gateway_clearing(gateway). amount != 0 is enforced as a cross-field invariant in PayloadValidator.",
     "type": "object",
     "required": ["order_id", "gateway", "amount", "fee_type"],
     "properties": {

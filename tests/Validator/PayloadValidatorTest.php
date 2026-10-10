@@ -315,7 +315,7 @@ final class PayloadValidatorTest extends TestCase
 
     // ----- cross-field invariants (422) ----------------------------
 
-    public function testFeeAmountMustBePositive(): void
+    public function testZeroOrderFeeRejected(): void
     {
         $data = [
             'order_id' => 'O-1',
@@ -347,17 +347,40 @@ final class PayloadValidatorTest extends TestCase
         self::assertSame('data.amount', $this->firstError($result)->field);
     }
 
-    public function testNegativeFeeAmountRejected(): void
+    /**
+     * A fee the provider gave back (PayPal returned the 15.41 EUR chargeback
+     * fee when it reversed a chargeback) is the same fee with the opposite
+     * sign: the receiver credits the fee account.
+     */
+    public function testNegativeOrderFeeIsARefundedFeeAndValidates(): void
     {
         $data = [
             'order_id' => 'O-1',
             'gateway'  => 'paypal',
-            'amount'   => '-3.00',
+            'amount'   => '-15.41',
             'fee_type' => 'chargeback',
+            'currency' => 'EUR',
         ];
 
-        $result = $this->validator->validate($this->envelope(2, 'order.fee', $data));
+        foreach ([1, 2] as $version) {
+            $result = $this->validator->validate($this->envelope($version, 'order.fee', $data));
 
+            self::assertTrue($result->isValid(), "v{$version}: " . \json_encode($result->getErrors()));
+        }
+    }
+
+    public function testNegativeAccountFeeAmountRejected(): void
+    {
+        $data = [
+            'fee_id'      => 'BC2042895E0FA7B8243109A9B0EB42A4',
+            'gateway'     => 'costplus',
+            'amount'      => '-3.00',
+            'incurred_at' => '2026-07-11T00:00:00Z',
+        ];
+
+        $result = $this->validator->validate($this->envelope(2, 'account.fee', $data));
+
+        self::assertSame(ValidationResult::HTTP_UNPROCESSABLE, $result->httpStatus);
         self::assertSame('invariant_violated', $this->firstError($result)->code);
         self::assertSame('data.amount', $this->firstError($result)->field);
     }

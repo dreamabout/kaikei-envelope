@@ -17,7 +17,9 @@ use Dreamabout\KaikeiEnvelope\PayloadInterface;
  * Required:
  *   - order_id : string
  *   - gateway  : string -- payment-gateway identifier ('stripe', 'paypal', ...)
- *   - amount   : decimal string (> 0, enforced by PayloadValidator invariant)
+ *   - amount   : decimal string, never zero (PayloadValidator invariant);
+ *                negative (1.19.0) = the provider gave the fee back, and the
+ *                receiver credits the fee account
  *   - fee_type : 'processing' | 'chargeback'
  *
  * Optional:
