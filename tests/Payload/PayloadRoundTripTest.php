@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Dreamabout\KaikeiEnvelope\Tests\Payload;
 
 use Dreamabout\KaikeiEnvelope\Payload\AccountFeePayload;
+use Dreamabout\KaikeiEnvelope\Payload\BalanceConvertedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderCapturedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderChargeAddedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderFeePayload;
@@ -302,6 +303,33 @@ final class PayloadRoundTripTest extends TestCase
         ];
 
         self::assertSame($in, OrderChargeAddedPayload::fromArray($in)->toArray());
+    }
+
+    public function testBalanceConvertedRoundTrip(): void
+    {
+        $in = [
+            'conversion_id'          => 'EXAMPLECONV000001',
+            'gateway'                => 'paypal',
+            'from'                   => ['currency' => 'SEK', 'amount' => '1250.00'],
+            'to'                     => ['currency' => 'EUR', 'amount' => '110.00'],
+            'converted_at'           => '2026-01-15T10:00:00Z',
+            'related_transaction_id' => 'EXAMPLETXN0000001',
+        ];
+
+        self::assertSame($in, BalanceConvertedPayload::fromArray($in)->toArray());
+    }
+
+    public function testBalanceConvertedOmitsAbsentRelatedTransaction(): void
+    {
+        $in = [
+            'conversion_id' => 'EXAMPLECONV000002',
+            'gateway'       => 'paypal',
+            'from'          => ['currency' => 'EUR', 'amount' => '45.10'],
+            'to'            => ['currency' => 'PLN', 'amount' => '192.35'],
+            'converted_at'  => '2026-01-20T14:00:00Z',
+        ];
+
+        self::assertSame($in, BalanceConvertedPayload::fromArray($in)->toArray());
     }
 
     public function testPaymentPrepaidRoundTrip(): void

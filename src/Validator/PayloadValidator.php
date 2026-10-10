@@ -292,6 +292,7 @@ final class PayloadValidator
             // account fee has been seen coming back, so it has no refund form.
             EventType::AccountFee => $this->feeErrors($data),
             EventType::OrderCaptured => $this->settlementBlockErrors($data),
+            EventType::BalanceConverted => $this->conversionErrors($data),
             // payout.disbursed carries a single gross amount -- no
             // cross-field arithmetic invariant the schema can't already
             // express (amount pattern, required keys). Schema-tier only.
@@ -557,6 +558,37 @@ final class PayloadValidator
         }
 
         return [];
+    }
+
+    /**
+     * A balance conversion moves money from one currency to another, and both
+     * sides are a positive magnitude (the direction is in `from` and `to`). The
+     * schema rejects a negative amount; zero and a same-currency pair are
+     * checked here, since JSON Schema cannot compare two fields.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return list<FieldError>
+     */
+    private function conversionErrors(array $data): array
+    {
+        // Reached only after the data schema validated: from and to are
+        // objects with a currency code and a non-negative decimal amount.
+        $errors = [];
+        foreach (['from', 'to'] as $side) {
+            $amount = (string) (((array) ($data[$side] ?? []))['amount'] ?? '0');
+            if (\bccomp($amount, '0.00', 2) <= 0) {
+                $errors[] = new FieldError("data.{$side}.amount", 'invariant_violated', "Converted amount must be positive (got {$amount}).");
+            }
+        }
+
+        $fromCurrency = (string) (((array) ($data['from'] ?? []))['currency'] ?? '');
+        $toCurrency = (string) (((array) ($data['to'] ?? []))['currency'] ?? '');
+        if ($fromCurrency === $toCurrency) {
+            $errors[] = new FieldError('data.to.currency', 'invariant_violated', "A conversion must change currency (from and to are both {$toCurrency}).");
+        }
+
+        return $errors;
     }
 
     /**

@@ -7,6 +7,7 @@ namespace Dreamabout\KaikeiEnvelope\Tests;
 use Dreamabout\KaikeiEnvelope\Envelope;
 use Dreamabout\KaikeiEnvelope\EventType;
 use Dreamabout\KaikeiEnvelope\Payload\AccountFeePayload;
+use Dreamabout\KaikeiEnvelope\Payload\BalanceConvertedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderCapturedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderChargeAddedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderRefundedPayload;
@@ -90,6 +91,17 @@ final class EnvelopeTest extends TestCase
             'items' => [['type' => 'fee', 'gross_amount' => '25.00', 'vat_amount' => '5.00', 'vat_rate' => '0.25']],
         ]);
         self::assertInstanceOf(OrderChargeAddedPayload::class, $env->data);
+    }
+
+    public function testBalanceConvertedDispatchesToCorrectPayload(): void
+    {
+        $env = $this->build(EventType::BalanceConverted, [
+            'conversion_id' => 'c1', 'gateway' => 'paypal',
+            'from' => ['currency' => 'SEK', 'amount' => '1250.00'],
+            'to' => ['currency' => 'EUR', 'amount' => '110.00'],
+            'converted_at' => '2026-01-15T10:00:00Z',
+        ]);
+        self::assertInstanceOf(BalanceConvertedPayload::class, $env->data);
     }
 
     public function testPayoutDisbursedDispatchesToCorrectPayload(): void

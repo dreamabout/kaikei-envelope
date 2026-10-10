@@ -15,6 +15,23 @@ and this project adheres to [Semantic Versioning][semver].
 
 ### Added
 
+- **`balance.converted`** (v2 only): a currency conversion inside a payment
+  provider's multi-currency balance, e.g. PayPal converting a SEK payment to EUR
+  (T0200). Before it the contract had no way to report one: `payout.disbursed` is
+  a bank deposit, `account.fee` a fee, and `payment.prepaid`'s `settlement_*`
+  fields cover one direction only, not a refund converted back.
+
+  Fields: `conversion_id` (the provider's id, the receiver's dedup key),
+  `gateway`, `from {currency, amount}`, `to {currency, amount}`, `converted_at`
+  and an optional `related_transaction_id` (the payment or refund it belongs to).
+  Both amounts are positive; the direction is in `from` and `to`. The schema
+  rejects a negative amount and a missing `conversion_id`; tier 3 rejects a zero
+  amount and the same currency on both sides (`invariant_violated`). The name is
+  provider-neutral, so any provider with a multi-currency balance can send it.
+
+  New: `EventType::BalanceConverted`, `Payload\BalanceConvertedPayload`,
+  `schemas/v2/balance_converted.payload.schema.json`, fixtures and
+  `docs/events/balance_converted.md`.
 - **`payment.prepaid.amount`** (v2 only, optional): what the payment provider
   actually took, in the order's `currency`, as a non-negative decimal with two
   places (`"110.00"`). It can exceed the sum of `items` when the customer
@@ -35,6 +52,8 @@ and this project adheres to [Semantic Versioning][semver].
   already allowed the minus; their descriptions now explain the sign.
 
 Everything valid in 1.18 is still valid. The receiver must run 1.19 before the
+producer sends `balance.converted` or a negative fee: an older receiver rejects
+both.
 producer sends `amount` or a negative fee: an older receiver rejects the unknown
 field and the negative fee.
 

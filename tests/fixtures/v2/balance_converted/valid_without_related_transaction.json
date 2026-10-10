@@ -1,0 +1,7 @@
+{
+    "conversion_id": "EXAMPLECONV000002",
+    "gateway": "paypal",
+    "from": { "currency": "EUR", "amount": "45.10" },
+    "to": { "currency": "PLN", "amount": "192.35" },
+    "converted_at": "2026-01-20T14:00:00Z"
+}

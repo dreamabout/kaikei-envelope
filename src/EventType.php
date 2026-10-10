@@ -42,6 +42,11 @@ namespace Dreamabout\KaikeiEnvelope;
  * invoice on an order `order.shipped` already invoiced, with the same
  * customer, item and payment shapes and its own required `invoice_number`.
  * See docs/events/order_charge_added.md.
+ *
+ * `balance.converted` (added 1.19.0) is additive, v2 only: a currency
+ * conversion inside a payment provider's multi-currency balance (PayPal
+ * T0200), `from` one currency `to` another. See
+ * docs/events/balance_converted.md.
  */
 enum EventType: string
 {
@@ -55,6 +60,7 @@ enum EventType: string
     case AccountFee      = 'account.fee';
     case PayoutAmended   = 'payout.amended';
     case OrderChargeAdded = 'order.charge_added';
+    case BalanceConverted = 'balance.converted';
 
     case PurchasePrepaymentApproved = 'purchase.prepayment_approved';
     case PurchaseInvoiceApproved    = 'purchase.invoice_approved';
@@ -78,7 +84,7 @@ enum EventType: string
     /**
      * The first `schema_version` that carries this event type. v1 is frozen
      * as the mirror of the contract deployed before the purchase events, so
-     * they, `payout.amended` and `order.charge_added` exist from v2; the receiver answers a v1 envelope carrying one
+     * they, `payout.amended`, `order.charge_added` and `balance.converted` exist from v2; the receiver answers a v1 envelope carrying one
      * with `unknown_event_type`.
      */
     public function minimumSchemaVersion(): int
@@ -92,7 +98,8 @@ enum EventType: string
             self::PurchaseBooked,
             self::PurchaseRejected,
             self::PayoutAmended,
-            self::OrderChargeAdded => 2,
+            self::OrderChargeAdded,
+            self::BalanceConverted => 2,
             default => 1,
         };
     }

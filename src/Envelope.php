@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Dreamabout\KaikeiEnvelope;
 
 use Dreamabout\KaikeiEnvelope\Payload\AccountFeePayload;
+use Dreamabout\KaikeiEnvelope\Payload\BalanceConvertedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderCapturedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderChargeAddedPayload;
 use Dreamabout\KaikeiEnvelope\Payload\OrderFeePayload;
@@ -94,6 +95,7 @@ final class Envelope
             EventType::AccountFee => AccountFeePayload::fromArray($rawData),
             EventType::PayoutAmended => PayoutAmendedPayload::fromArray($rawData),
             EventType::OrderChargeAdded => OrderChargeAddedPayload::fromArray($rawData),
+            EventType::BalanceConverted => BalanceConvertedPayload::fromArray($rawData),
             EventType::PurchasePrepaymentApproved => PurchasePrepaymentApprovedPayload::fromArray($rawData),
             EventType::PurchaseInvoiceApproved => PurchaseInvoiceApprovedPayload::fromArray($rawData),
             EventType::PurchaseCreditNoteApproved => PurchaseCreditNoteApprovedPayload::fromArray($rawData),
