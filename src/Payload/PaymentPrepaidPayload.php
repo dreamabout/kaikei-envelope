@@ -29,7 +29,11 @@ use Dreamabout\KaikeiEnvelope\PayloadInterface;
  *   - currency       : 3-letter ISO code
  *   - fx_rate        : decimal string
  *   - invoice_number : assigned by the producer at issuance time
-*
+ *   - amount         : decimal string, what the provider actually took, in
+ *                      `currency` (1.19.0). Can exceed the sum of `items` on an
+ *                      overpayment; the receiver books the excess as a balance
+ *                      owed to the customer. Absent = the sum of `items`.
+ *
  * The SETTLEMENT block -- `settlement_currency` / `settlement_amount` /
  * `settlement_fx_rate` -- records what this money became when the gateway
  * converted it. On a cash-in event `currency` is already the CUSTOMER's
@@ -70,6 +74,7 @@ final class PaymentPrepaidPayload implements PayloadInterface
         public readonly ?string $settlementCurrency = null,
         public readonly ?string $settlementAmount = null,
         public readonly ?string $settlementFxRate = null,
+        public readonly ?string $amount = null,
     ) {
     }
 
@@ -91,6 +96,7 @@ final class PaymentPrepaidPayload implements PayloadInterface
             settlementCurrency: isset($row['settlement_currency']) ? (string)$row['settlement_currency'] : null,
             settlementAmount: isset($row['settlement_amount']) ? (string)$row['settlement_amount'] : null,
             settlementFxRate: isset($row['settlement_fx_rate']) ? (string)$row['settlement_fx_rate'] : null,
+            amount: isset($row['amount']) ? (string)$row['amount'] : null,
         );
     }
 
@@ -112,6 +118,9 @@ final class PaymentPrepaidPayload implements PayloadInterface
         }
         if (null !== $this->invoiceNumber) {
             $out['invoice_number'] = $this->invoiceNumber;
+        }
+        if (null !== $this->amount) {
+            $out['amount'] = $this->amount;
         }
 
         if (null !== $this->settlementCurrency) {

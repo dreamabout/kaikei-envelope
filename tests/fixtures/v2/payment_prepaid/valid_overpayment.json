@@ -1,0 +1,13 @@
+{
+    "order_id": "O-401",
+    "customer": { "country_code": "PL", "is_b2b": false },
+    "gateway": "paypal",
+    "transaction_id": "paypal_tx_overpaid",
+    "prepaid_at": "2026-10-03T09:12:00Z",
+    "items": [
+        { "type": "physical", "gross_amount": "100.00", "vat_amount": "18.70", "vat_rate": "0.23" }
+    ],
+    "currency": "PLN",
+    "fx_rate": "1.75",
+    "amount": "110.00"
+}

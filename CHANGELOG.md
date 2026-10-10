@@ -9,7 +9,20 @@ and this project adheres to [Semantic Versioning][semver].
 
 ## [Unreleased]
 
-Next minor: 1.19.0.
+[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.19.0...HEAD
+
+## [1.19.0] - 2026-10-10
+
+### Added
+
+- **`payment.prepaid.amount`** (v2 only, optional): what the payment provider
+  actually took, in the order's `currency`, as a non-negative decimal with two
+  places (`"110.00"`). It can exceed the sum of `items` when the customer
+  overpaid, so the receiver can book the excess as a balance owed to the customer.
+  Absent, the receiver takes the sum of `items` as before. `settlement_amount`
+  cannot serve: it is in the settlement currency, which differs from the order's
+  when the provider converted the money. `PaymentPrepaidPayload::$amount`, nullable,
+  omitted from `toArray()` when null.
 
 ### Changed
 
@@ -21,10 +34,11 @@ Next minor: 1.19.0.
   "must not be zero"). `account.fee.amount` must still be positive. The schemas
   already allowed the minus; their descriptions now explain the sign.
 
-Everything valid in 1.18 is still valid. The receiver must run 1.19 and book a
-negative fee before the producer sends one: an older receiver rejects it.
+Everything valid in 1.18 is still valid. The receiver must run 1.19 before the
+producer sends `amount` or a negative fee: an older receiver rejects the unknown
+field and the negative fee.
 
-[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.18.0...HEAD
+[1.19.0]: https://github.com/dreamabout/kaikei-envelope/compare/v1.18.0...v1.19.0
 
 ## [1.18.0] - 2026-10-09
 
