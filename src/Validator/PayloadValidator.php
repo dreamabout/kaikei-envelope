@@ -282,7 +282,7 @@ final class PayloadValidator
             // customer and item shapes, so the same four rules hold for it.
             EventType::OrderChargeAdded => [...$this->b2bCustomerErrors($data), ...$this->itemLineErrors($data), ...$this->noCogsItemErrors($data), ...$this->deliveryPostalCodeErrors($data)],
             EventType::PaymentPrepaid => [...$this->itemLineErrors($data), ...$this->noCogsItemErrors($data), ...$this->settlementBlockErrors($data), ...$this->deliveryPostalCodeErrors($data)],
-            EventType::OrderRefunded => [...$this->refundErrors($version, $data), ...$this->noCogsItemErrors($data), ...$this->deliveryPostalCodeErrors($data)],
+            EventType::OrderRefunded => [...$this->refundErrors($version, $data), ...$this->noCogsItemErrors($data), ...$this->customerCreditErrors($data), ...$this->deliveryPostalCodeErrors($data)],
             EventType::PayoutPaid,
             // payout.amended carries the payout's full new state, so the same
             // arithmetic holds for it as for payout.paid.
@@ -647,6 +647,49 @@ final class PayloadValidator
                     'invariant_violated',
                     \sprintf("Item type '%s' carries no cost of goods and must not include unit_cost.", (string) $type),
                 );
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * A customer_credit line (v2 order.refunded, 1.20.0) pays back a balance owed
+     * to the customer. It is not a sale, so it carries no VAT and no goods: its
+     * gross_amount is negative, vat_amount and vat_rate are zero, and it has no
+     * sku, quantity or unit_cost. Only the v2 schema admits the type, so on v1
+     * this finds nothing.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return list<FieldError>
+     */
+    private function customerCreditErrors(array $data): array
+    {
+        $errors = [];
+        /** @var list<mixed> $items */
+        $items = \is_array($data['items'] ?? null) ? \array_values($data['items']) : [];
+        foreach ($items as $i => $rawItem) {
+            $item = (array) $rawItem;
+            if ('customer_credit' !== ($item['type'] ?? null)) {
+                continue;
+            }
+            $prefix = "data.items[{$i}]";
+            $gross = (string) ($item['gross_amount'] ?? '0');
+
+            if (\bccomp($gross, '0', 2) >= 0) {
+                $errors[] = new FieldError("{$prefix}.gross_amount", 'invariant_violated', "A customer_credit line must be negative (got {$gross}).");
+            }
+            if (0 !== \bccomp((string) ($item['vat_amount'] ?? '0'), '0', 2)) {
+                $errors[] = new FieldError("{$prefix}.vat_amount", 'invariant_violated', "A customer_credit line carries no VAT: vat_amount must be '0.00'.");
+            }
+            if (0 !== \bccomp((string) ($item['vat_rate'] ?? '0'), '0', 4)) {
+                $errors[] = new FieldError("{$prefix}.vat_rate", 'invariant_violated', 'A customer_credit line carries no VAT: vat_rate must be zero.');
+            }
+            foreach (['sku', 'quantity', 'unit_cost'] as $key) {
+                if (\array_key_exists($key, $item)) {
+                    $errors[] = new FieldError("{$prefix}.{$key}", 'invariant_violated', "A customer_credit line is not goods and must not include {$key}.");
+                }
             }
         }
 

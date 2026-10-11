@@ -34,6 +34,35 @@ Schemas:
   no-cost-of-goods charge/adjustment lines and must not include a
   `unit_cost` (`invariant_violated` on `data.items[<i>].unit_cost`).
   `discount` is a reduction line (negative amounts) — commonly used on credit notes.
+- v2 also accepts `customer_credit` — see [Customer credit](#customer-credit).
+  A `customer_credit` line with a zero or positive `gross_amount`, a non-zero
+  `vat_amount` or `vat_rate`, or with `sku`, `quantity` or `unit_cost` is rejected
+  (`invariant_violated` on that field).
+
+## Customer credit
+
+A `customer_credit` line pays back a balance the shop owes the customer: an
+overpayment, or an order made smaller after it was paid. It is not a sale, so it
+carries no VAT and no goods:
+
+- `gross_amount` negative, `vat_amount` `"0.00"`, `vat_rate` `"0.00"`;
+- no `sku`, `quantity` or `unit_cost`.
+
+A refund may carry `customer_credit` lines alone or alongside goods lines. The sum
+invariant is unchanged — the credit counts like any other line:
+
+```json
+"items": [
+    { "type": "customer_credit", "gross_amount": "-0.80", "vat_amount": "0.00", "vat_rate": "0.00" },
+    { "type": "physical", "gross_amount": "-4.00", "vat_amount": "-0.80", "vat_rate": "0.25" }
+],
+"refund_payments": [
+    { "gateway": "paypal", "original_transaction_id": "pp_orig", "refund_transaction_id": "pp_refund", "amount": "4.80" }
+]
+```
+
+- v2 only. v1 is unchanged and rejects the type (`invalid_data`).
+- Added in **1.20.0**. The receiver must run 1.20 before the producer sends it.
 
 ## Unpaid orders
 

@@ -128,6 +128,7 @@ the structural strictness differs, and that lives in the schemas.
 | shipped / prepaid | gift-card lines have `vat_amount == 0.00` | `invariant_violated` |
 | refunded | each `refund_payments[].amount > 0` | `invariant_violated` |
 | refunded | `sum(refund_payments.amount) == -sum(items.gross_amount)` | `invariant_violated` |
+| refunded (v2) | `customer_credit` lines: `gross_amount < 0`, `vat_amount == 0`, `vat_rate == 0`, no `sku`/`quantity`/`unit_cost` (1.20.0) | `invariant_violated` |
 | payout | `gross_amount == fee_amount + net_amount` | `invariant_violated` |
 | order.fee | `amount != 0` (negative = fee given back, 1.19.0) | `invariant_violated` |
 | account.fee | `amount > 0` | `invariant_violated` |

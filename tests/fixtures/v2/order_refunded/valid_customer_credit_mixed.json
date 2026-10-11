@@ -1,0 +1,12 @@
+{
+    "order_id": "O-311",
+    "reason": "customer_request",
+    "items": [
+        { "type": "customer_credit", "gross_amount": "-0.80", "vat_amount": "0.00", "vat_rate": "0.00" },
+        { "type": "physical", "gross_amount": "-4.00", "vat_amount": "-0.80", "vat_rate": "0.25" }
+    ],
+    "refund_payments": [
+        { "gateway": "paypal", "original_transaction_id": "pp_orig", "refund_transaction_id": "pp_refund", "amount": "4.80" }
+    ],
+    "credit_note_number": "CN-2026-0011"
+}

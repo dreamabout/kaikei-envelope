@@ -9,7 +9,26 @@ and this project adheres to [Semantic Versioning][semver].
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.19.0...HEAD
+[Unreleased]: https://github.com/dreamabout/kaikei-envelope/compare/v1.20.0...HEAD
+
+## [1.20.0] - 2026-10-11
+
+### Added
+
+- **`customer_credit`** item type on `order.refunded` (v2 only): pays back a
+  balance the shop owes the customer -- an overpayment, or an order made
+  smaller after it was paid. Before it a refund could only reverse item lines,
+  so money returned for anything other than goods could not be expressed.
+
+  A `customer_credit` line has a negative `gross_amount`, `vat_amount` `"0.00"`
+  and `vat_rate` `"0.00"`, and no `sku`, `quantity` or `unit_cost`. A refund
+  may carry `customer_credit` lines alone or alongside goods lines. The sum
+  invariant is unchanged: `sum(refund_payments) == -sum(items)`, the credit
+  included. Tier 3 rejects a `customer_credit` line with VAT, with a zero or
+  positive amount, or with `sku`/`quantity`/`unit_cost` (`invariant_violated`
+  on the offending field). v1 is unchanged and does not know the type.
+
+  The receiver must run 1.20 before a producer sends it.
 
 ## [1.19.0] - 2026-10-10
 
@@ -57,6 +76,7 @@ both.
 producer sends `amount` or a negative fee: an older receiver rejects the unknown
 field and the negative fee.
 
+[1.20.0]: https://github.com/dreamabout/kaikei-envelope/compare/v1.19.0...v1.20.0
 [1.19.0]: https://github.com/dreamabout/kaikei-envelope/compare/v1.18.0...v1.19.0
 
 ## [1.18.0] - 2026-10-09
