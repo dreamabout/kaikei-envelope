@@ -1,0 +1,11 @@
+{
+    "order_id": "O-313",
+    "reason": "customer_request",
+    "items": [
+        { "type": "physical", "gross_amount": "-60.00", "vat_amount": "-12.00", "vat_rate": "0.25" },
+        { "type": "customer_credit", "gross_amount": "10.00", "vat_amount": "0.00", "vat_rate": "0.00" }
+    ],
+    "refund_payments": [
+        { "gateway": "paypal", "original_transaction_id": "pp_orig", "refund_transaction_id": "pp_refund", "amount": "50.00" }
+    ]
+}

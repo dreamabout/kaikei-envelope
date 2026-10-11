@@ -1,0 +1,11 @@
+{
+    "order_id": "O-310",
+    "reason": "customer_request",
+    "items": [
+        { "type": "customer_credit", "gross_amount": "-50.00", "vat_amount": "0.00", "vat_rate": "0.00" }
+    ],
+    "refund_payments": [
+        { "gateway": "paypal", "original_transaction_id": "pp_orig", "refund_transaction_id": "pp_refund", "amount": "50.00" }
+    ],
+    "credit_note_number": "CN-2026-0010"
+}

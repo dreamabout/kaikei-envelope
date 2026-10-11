@@ -14,7 +14,9 @@ use Dreamabout\KaikeiEnvelope\PayloadInterface;
  * Required (per v1):
  *   - order_id        : string
  *   - reason          : enum string -- 'customer_request' | 'chargeback' | 'merchant_initiated' | 'other'
- *   - items           : non-empty array of {type, gross_amount, vat_amount, vat_rate}
+ *   - items           : non-empty array of {type, gross_amount, vat_amount, vat_rate};
+ *                       v2 (1.20.0) also accepts type 'customer_credit' -- a balance
+ *                       owed to the customer paid back: negative, no VAT, no goods
  *   - refund_payments : array of {gateway, original_transaction_id, refund_transaction_id, amount};
  *                       non-empty, unless `unpaid` is true, when it must be empty
  *

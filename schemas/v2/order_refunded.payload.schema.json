@@ -164,8 +164,10 @@
             "shipping",
             "fee",
             "giftwrapping",
-            "discount"
-          ]
+            "discount",
+            "customer_credit"
+          ],
+          "description": "customer_credit (1.20.0) pays back a balance owed to the customer -- an overpayment, or an order made smaller after it was paid. Not a sale: negative gross_amount, vat_amount and vat_rate zero, no sku, quantity or unit_cost (tier 3)."
         },
         "gross_amount": {
           "type": "string",
